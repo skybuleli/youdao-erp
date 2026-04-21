@@ -91,9 +91,9 @@
           <div class="form-group">
             <label>调整类型</label>
             <div class="type-selector">
-              <button class="type-btn active">📥 入库</button>
-              <button class="type-btn">📤 出库</button>
-              <button class="type-btn">📝 盘点</button>
+              <button class="type-btn" :class="{ active: adjustType === 'in' }" @click="adjustType = 'in'">📥 入库</button>
+              <button class="type-btn" :class="{ active: adjustType === 'out' }" @click="adjustType = 'out'">📤 出库</button>
+              <button class="type-btn" :class="{ active: adjustType === 'count' }" @click="adjustType = 'count'">📝 盘点</button>
             </div>
           </div>
           <div class="form-group">
@@ -120,7 +120,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { productApi } from '@/api'
+import { productApi, inventoryApi } from '@/api'
 
 const searchQuery = ref('')
 const activeTab = ref('all')
@@ -128,6 +128,7 @@ const showAdjustModal = ref(false)
 const adjustItem = ref<any>(null)
 const adjustQty = ref(0)
 const adjustRemark = ref('')
+const adjustType = ref('in')
 const loading = ref(false)
 const items = ref<Array<any>>([])
 
@@ -192,15 +193,29 @@ function adjustStock(item: any) {
   adjustItem.value = item
   adjustQty.value = 0
   adjustRemark.value = ''
+  adjustType.value = 'in'
   showAdjustModal.value = true
 }
 
-function confirmAdjust() {
-  if (adjustItem.value && adjustQty.value !== 0) {
-    adjustItem.value.stock += adjustQty.value
-    if (adjustItem.value.stock < 0) adjustItem.value.stock = 0
+async function confirmAdjust() {
+  if (!adjustItem.value) return
+  if (adjustQty.value === 0) {
+    alert('调整数量不能为 0')
+    return
+  }
+  try {
+    const qty = adjustType.value === 'out' ? -Math.abs(adjustQty.value) : Math.abs(adjustQty.value)
+    await inventoryApi.adjust({
+      productId: adjustItem.value.id,
+      qty,
+      type: adjustType.value === 'in' ? '入库' : adjustType.value === 'out' ? '出库' : '盘点',
+      remark: adjustRemark.value || undefined
+    })
     showAdjustModal.value = false
     alert('库存调整成功！')
+    await loadData()
+  } catch (err: any) {
+    alert(err.message || '库存调整失败')
   }
 }
 

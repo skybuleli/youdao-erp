@@ -6,7 +6,7 @@
         <span class="search-icon">🔍</span>
         <input v-model="searchQuery" class="kimi-input" placeholder="搜索商品名称、条码..." @keyup.enter="loadProducts" />
       </div>
-      <button class="btn-primary" @click="showAddModal = true">
+      <button class="btn-primary" @click="openAddModal">
         <span>➕ 新增商品</span>
       </button>
     </div>
@@ -44,7 +44,10 @@
             </span>
           </div>
         </div>
-        <button class="more-btn" @click="editProduct(product)">⋯</button>
+        <div class="card-actions">
+          <button class="more-btn" @click="editProduct(product)">✏️</button>
+          <button class="more-btn delete" @click="deleteProduct(product)">🗑️</button>
+        </div>
       </div>
     </div>
 
@@ -87,7 +90,7 @@
           <div class="form-row">
             <div class="form-group">
               <label>分类</label>
-              <select v-model="form.category" class="kimi-select">
+              <select v-model.number="form.categoryId" class="kimi-select">
                 <option v-for="cat in categories.slice(1)" :key="cat.value" :value="cat.value">{{ cat.label }}</option>
               </select>
             </div>
@@ -112,23 +115,23 @@ import { productApi } from '@/api'
 import type { Product } from '@/api/product'
 
 const searchQuery = ref('')
-const selectedCategory = ref('all')
+const selectedCategory = ref(0)
 const showAddModal = ref(false)
 const editingProduct = ref<Product | null>(null)
 const products = ref<Product[]>([])
 const loading = ref(false)
 
 const categories = [
-  { value: 'all', label: '全部' },
-  { value: 'drink', label: '饮料' },
-  { value: 'snack', label: '零食' },
-  { value: 'grain', label: '粮油' },
-  { value: 'daily', label: '日用' },
-  { value: 'other', label: '其他' }
+  { value: 0, label: '全部' },
+  { value: 1, label: '饮料' },
+  { value: 2, label: '零食' },
+  { value: 3, label: '粮油' },
+  { value: 4, label: '日用' },
+  { value: 5, label: '其他' }
 ]
 
-const iconMap: Record<string, string> = {
-  drink: '🥤', snack: '🍪', grain: '🍚', daily: '🧴', other: '📦'
+const iconMap: Record<number, string> = {
+  1: '🥤', 2: '🍪', 3: '🍚', 4: '🧴', 5: '📦'
 }
 
 const filteredProducts = computed(() => {
@@ -140,10 +143,10 @@ const filteredProducts = computed(() => {
     cost: p.purchasePrice,
     spec: p.specs || '',
     unit: p.unit,
-    category: String(p.categoryId || 'other'),
+    categoryId: p.categoryId ?? 5,
     stock: p.stockQty,
     minStock: p.minStock,
-    icon: iconMap[String(p.categoryId || 'other')] || '📦'
+    icon: iconMap[p.categoryId ?? 5] || '📦'
   }))
 })
 
@@ -152,7 +155,7 @@ async function loadProducts() {
   try {
     const res = await productApi.list({
       search: searchQuery.value || undefined,
-      category: selectedCategory.value === 'all' ? undefined : selectedCategory.value
+      category: selectedCategory.value === 0 ? undefined : String(selectedCategory.value)
     })
     products.value = res.data
   } catch (err: any) {
@@ -169,13 +172,19 @@ watch([searchQuery, selectedCategory], () => {
 onMounted(loadProducts)
 
 const form = reactive({
-  name: '', code: '', price: 0, cost: 0, spec: '', unit: '', category: 'drink', minStock: 10
+  name: '', code: '', price: 0, cost: 0, spec: '', unit: '', categoryId: 5, minStock: 10
 })
 
 function stockClass(stock: number, min: number) {
   if (stock <= 0) return 'danger'
   if (stock <= min) return 'warning'
   return 'normal'
+}
+
+function openAddModal() {
+  editingProduct.value = null
+  Object.assign(form, { name: '', code: '', price: 0, cost: 0, spec: '', unit: '', categoryId: 5, minStock: 10 })
+  showAddModal.value = true
 }
 
 function editProduct(product: any) {
@@ -187,7 +196,7 @@ function editProduct(product: any) {
     cost: product.cost,
     spec: product.spec || '',
     unit: product.unit,
-    category: product.category,
+    categoryId: product.categoryId,
     minStock: product.minStock
   })
   showAddModal.value = true
@@ -205,7 +214,7 @@ async function saveProduct() {
     purchasePrice: form.cost,
     specs: form.spec,
     unit: form.unit,
-    categoryId: categories.findIndex(c => c.value === form.category) || undefined,
+    categoryId: form.categoryId,
     minStock: form.minStock
   }
   try {
@@ -216,10 +225,20 @@ async function saveProduct() {
     }
     showAddModal.value = false
     editingProduct.value = null
-    Object.assign(form, { name: '', code: '', price: 0, cost: 0, spec: '', unit: '', category: 'drink', minStock: 10 })
+    Object.assign(form, { name: '', code: '', price: 0, cost: 0, spec: '', unit: '', categoryId: 5, minStock: 10 })
     await loadProducts()
   } catch (err: any) {
     alert(err.message || '保存失败')
+  }
+}
+
+async function deleteProduct(product: any) {
+  if (!confirm(`确定要删除商品「${product.name}」吗？删除后不可恢复。`)) return
+  try {
+    await productApi.delete(product.id)
+    await loadProducts()
+  } catch (err: any) {
+    alert(err.message || '删除失败')
   }
 }
 </script>
@@ -399,16 +418,32 @@ async function saveProduct() {
   box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
 }
 
-.more-btn {
+.card-actions {
   position: absolute;
   right: 8px;
   top: 8px;
+  display: flex;
+  gap: 4px;
+}
+
+.more-btn {
   background: none;
   border: none;
   color: var(--text-tertiary);
-  font-size: 20px;
+  font-size: 16px;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  transition: all 0.15s;
+}
+
+.more-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.more-btn.delete:hover {
+  color: var(--color-danger);
 }
 
 /* Modal */
