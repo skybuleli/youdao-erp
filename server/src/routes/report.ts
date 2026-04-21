@@ -50,6 +50,11 @@ reportRouter.get('/dashboard', async (c) => {
   // 往来单位总数
   const partnerCount = await db.select({ count: sql<number>`COUNT(*)` }).from(schema.partners)
 
+  // 供应商总数
+  const supplierCount = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(schema.partners)
+    .where(eq(schema.partners.type, 'supplier'))
+
   return c.json({
     data: {
       todaySales: todaySalesResult[0]?.total || 0,
@@ -58,7 +63,8 @@ reportRouter.get('/dashboard', async (c) => {
       receivableAmount: receivableResult[0]?.total || 0,
       payableAmount: payableResult[0]?.total || 0,
       totalProducts: productCount[0]?.count || 0,
-      totalPartners: partnerCount[0]?.count || 0
+      totalPartners: partnerCount[0]?.count || 0,
+      totalSuppliers: supplierCount[0]?.count || 0
     }
   })
 })
@@ -163,19 +169,39 @@ reportRouter.get('/profit', async (c) => {
 reportRouter.get('/inventory', async (c) => {
   const db = drizzle(c.env.DB, { schema })
 
-  const products = await db.select().from(schema.products)
+  const rows = await db.select({
+    product: schema.products,
+    supplierName: schema.partners.name
+  })
+    .from(schema.products)
+    .leftJoin(schema.partners, eq(schema.products.supplierId, schema.partners.id))
 
-  const totalSku = products.length
-  const totalValue = products.reduce((sum, p) => sum + ((p.stockQty ?? 0) * (p.purchasePrice ?? 0)), 0)
-  const warningCount = products.filter(p => (p.stockQty ?? 0) <= (p.minStock ?? 0)).length
-  const zeroStockCount = products.filter(p => (p.stockQty ?? 0) === 0).length
+  const totalSku = rows.length
+  const totalValue = rows.reduce((sum, r) => sum + ((r.product.stockQty ?? 0) * (r.product.purchasePrice ?? 0)), 0)
+  const warningCount = rows.filter(r => (r.product.stockQty ?? 0) <= (r.product.minStock ?? 0)).length
+  const zeroStockCount = rows.filter(r => (r.product.stockQty ?? 0) === 0).length
+
+  // 按供应商统计
+  const supplierMap = new Map<string, { sku: number; value: number }>()
+  for (const r of rows) {
+    const name = r.supplierName || '未关联供应商'
+    const existing = supplierMap.get(name) || { sku: 0, value: 0 }
+    existing.sku += 1
+    existing.value += (r.product.stockQty ?? 0) * (r.product.purchasePrice ?? 0)
+    supplierMap.set(name, existing)
+  }
 
   return c.json({
     data: {
       totalSku,
       totalValue: Math.round(totalValue * 100) / 100,
       warningCount,
-      zeroStockCount
+      zeroStockCount,
+      bySupplier: Array.from(supplierMap.entries()).map(([name, val]) => ({
+        supplier: name,
+        sku: val.sku,
+        value: Math.round(val.value * 100) / 100
+      }))
     }
   })
 })

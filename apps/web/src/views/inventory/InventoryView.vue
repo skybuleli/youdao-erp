@@ -6,6 +6,14 @@
       <input v-model="searchQuery" class="kimi-input" placeholder="搜索商品名称、条码..." />
     </div>
 
+    <!-- Supplier Filter -->
+    <div class="supplier-filter-row">
+      <select v-model.number="selectedSupplier" class="kimi-select supplier-select">
+        <option :value="null">全部供应商</option>
+        <option v-for="s in suppliers" :key="s.id" :value="s.id">{{ s.name }}</option>
+      </select>
+    </div>
+
     <!-- Filter Tabs -->
     <div class="filter-tabs">
       <button
@@ -27,7 +35,7 @@
           <div class="item-icon">{{ item.icon }}</div>
           <div class="item-info">
             <div class="item-name">{{ item.name }}</div>
-            <div class="item-code">{{ item.code }}</div>
+            <div class="item-code">{{ item.code }} | 供应商: {{ item.supplierName || '-' }}</div>
           </div>
           <div class="item-status">
             <span class="status-badge" :class="stockClass(item)">{{ statusText(item) }}</span>
@@ -119,11 +127,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { productApi, inventoryApi } from '@/api'
+import { ref, computed, onMounted, watch } from 'vue'
+import { productApi, partnerApi, inventoryApi } from '@/api'
 
 const searchQuery = ref('')
 const activeTab = ref('all')
+const selectedSupplier = ref<number | null>(null)
 const showAdjustModal = ref(false)
 const adjustItem = ref<any>(null)
 const adjustQty = ref(0)
@@ -131,6 +140,7 @@ const adjustRemark = ref('')
 const adjustType = ref('in')
 const loading = ref(false)
 const items = ref<Array<any>>([])
+const suppliers = ref<Array<{ id: number; name: string }>>([])
 
 const tabs = [
   { value: 'all', label: '全部', count: 0 },
@@ -138,10 +148,21 @@ const tabs = [
   { value: 'normal', label: '库存正常', count: 0 }
 ]
 
+async function loadSuppliers() {
+  try {
+    const res = await partnerApi.list({ type: 'supplier' })
+    suppliers.value = res.data.map((s: any) => ({ id: s.id, name: s.name }))
+  } catch (e: any) {
+    console.error('加载供应商失败', e.message)
+  }
+}
+
 async function loadData() {
   loading.value = true
   try {
-    const res = await productApi.list()
+    const res = await productApi.list({
+      supplier: selectedSupplier.value ? String(selectedSupplier.value) : undefined
+    })
     items.value = res.data.map((p: any) => ({
       id: p.id,
       name: p.name,
@@ -152,6 +173,7 @@ async function loadData() {
       maxStock: p.maxStock,
       cost: p.purchasePrice,
       price: p.salePrice,
+      supplierName: p.supplierName,
       icon: '📦'
     }))
   } catch (e: any) {
@@ -223,7 +245,12 @@ function viewHistory(item: any) {
   alert(`查看 ${item.name} 的出入库记录（待实现）`)
 }
 
-onMounted(loadData)
+watch(selectedSupplier, loadData)
+
+onMounted(() => {
+  loadSuppliers()
+  loadData()
+})
 </script>
 
 <style scoped>
@@ -260,6 +287,15 @@ onMounted(loadData)
 .kimi-input:focus {
   border-color: #7C5CFC;
   outline: none;
+}
+
+.supplier-filter-row {
+  margin-bottom: 8px;
+}
+
+.supplier-select {
+  width: 100%;
+  max-width: 280px;
 }
 
 .filter-tabs {

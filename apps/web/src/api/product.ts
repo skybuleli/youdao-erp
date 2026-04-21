@@ -5,6 +5,8 @@ export interface Product {
   barcode: string | null
   name: string
   categoryId: number | null
+  supplierId: number | null
+  supplierName?: string
   specs: string | null
   unit: string
   purchasePrice: number
@@ -28,6 +30,7 @@ export interface CreateProductReq {
   barcode?: string
   name: string
   categoryId?: number
+  supplierId?: number
   specs?: string
   unit: string
   purchasePrice?: number
@@ -37,7 +40,7 @@ export interface CreateProductReq {
 }
 
 export const productApi = {
-  list(params?: { search?: string; category?: string; page?: number; pageSize?: number }) {
+  list(params?: { search?: string; category?: string; supplier?: string; page?: number; pageSize?: number }) {
     const qs = new URLSearchParams()
     if (params?.search) qs.set('search', params.search)
     if (params?.category) qs.set('category', params.category)

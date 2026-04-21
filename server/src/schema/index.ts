@@ -22,6 +22,7 @@ export const products = sqliteTable('products', {
   barcode: text('barcode').unique(),
   name: text('name').notNull(),
   categoryId: integer('category_id'),
+  supplierId: integer('supplier_id'),
   specs: text('specs'),
   unit: text('unit').notNull(),
   purchasePrice: real('purchase_price').default(0),

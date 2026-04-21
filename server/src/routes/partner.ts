@@ -85,11 +85,21 @@ partnerRouter.put('/:id', async (c) => {
   return c.json({ data: updateResult[0], message: '往来单位更新成功' })
 })
 
-// DELETE /api/partners/:id — 删除
+// DELETE /api/partners/:id — 删除（供应商名下有商品时禁止删除）
 partnerRouter.delete('/:id', async (c) => {
   const db = drizzle(c.env.DB, { schema })
   const id = Number(c.req.param('id'))
   if (isNaN(id)) return c.json({ error: 'Invalid id' }, 400)
+
+  // 检查是否有关联商品
+  const productCount = await db.select({ count: sql<number>`count(*)` })
+    .from(schema.products)
+    .where(eq(schema.products.supplierId, id))
+    .get()
+
+  if (productCount && productCount.count > 0) {
+    return c.json({ error: `该供应商下还有 ${productCount.count} 个商品，无法删除。请先将商品转移给其他供应商。` }, 400)
+  }
 
   const deleteResult = await db.delete(schema.partners).where(eq(schema.partners.id, id)).returning()
   if (deleteResult.length === 0) return c.json({ error: 'Partner not found' }, 404)

@@ -121,6 +121,7 @@
         >
           <span class="qp-icon">{{ product.icon }}</span>
           <span class="qp-name">{{ product.name }}</span>
+          <span class="qp-supplier">{{ product.supplierName || '-' }}</span>
           <span class="qp-price">¥{{ product.price }}</span>
         </button>
       </div>
@@ -154,6 +155,7 @@ async function loadData() {
       id: p.id,
       name: p.name,
       price: p.salePrice,
+      supplierName: p.supplierName,
       icon: '📦'
     }))
   } catch (e: any) {
@@ -625,6 +627,15 @@ onMounted(loadData)
 
 .qp-name {
   font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.qp-supplier {
+  font-size: 10px;
+  color: var(--text-tertiary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

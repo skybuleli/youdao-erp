@@ -116,6 +116,24 @@
         </div>
       </div>
     </div>
+
+    <!-- Supplier Inventory Summary -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <h3>📦 供应商库存统计</h3>
+      </div>
+      <div class="supplier-list">
+        <div v-for="(s, i) in supplierInventory" :key="i" class="supplier-row">
+          <div class="supplier-info">
+            <span class="supplier-name">{{ s.supplier }}</span>
+          </div>
+          <div class="supplier-meta">
+            <span class="supplier-sku">{{ s.sku }} SKU</span>
+            <span class="supplier-value amount">¥{{ formatNumber(s.value) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -187,13 +205,16 @@ const partnerRanking = ref([
   { name: '赵老板', amount: 2100, orders: 3 }
 ])
 
+const supplierInventory = ref<Array<{ supplier: string; sku: number; value: number }>>([])
+
 async function loadData() {
   loading.value = true
   try {
-    const [, profitRes, salesRes] = await Promise.all([
+    const [, profitRes, salesRes, inventoryRes] = await Promise.all([
       reportApi.dashboard().catch(() => ({ data: null })),
       reportApi.profit().catch(() => ({ data: null })),
-      reportApi.sales(dateRange.value).catch(() => ({ data: null }))
+      reportApi.sales(dateRange.value).catch(() => ({ data: null })),
+      reportApi.inventory().catch(() => ({ data: null }))
     ])
     if (profitRes.data && profitRes.data.totalSales > 0) {
       report.value.sales = profitRes.data.totalSales
@@ -214,6 +235,9 @@ async function loadData() {
         income: Math.min(100, Math.max(5, s.sales / 100)),
         expense: Math.min(100, Math.max(5, s.sales / 200))
       }))
+    }
+    if (inventoryRes.data && inventoryRes.data.bySupplier) {
+      supplierInventory.value = inventoryRes.data.bySupplier
     }
   } catch {
     console.log('Report API not ready, using mock data')
@@ -554,6 +578,48 @@ onMounted(loadData)
   font-size: 12px;
   color: var(--text-tertiary);
   min-width: 50px;
+  text-align: right;
+}
+
+/* Supplier Inventory */
+.supplier-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.supplier-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.supplier-row:last-child {
+  border-bottom: none;
+}
+
+.supplier-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.supplier-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.supplier-sku {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.supplier-value {
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 80px;
   text-align: right;
 }
 </style>

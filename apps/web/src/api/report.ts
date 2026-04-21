@@ -38,6 +38,6 @@ export const reportApi = {
     return api.get<{ data: ProfitReport }>('/api/reports/profit')
   },
   inventory() {
-    return api.get<{ data: { totalSku: number; totalValue: number; warningCount: number; zeroStockCount: number } }>('/api/reports/inventory')
+    return api.get<{ data: { totalSku: number; totalValue: number; warningCount: number; zeroStockCount: number; bySupplier: Array<{ supplier: string; sku: number; value: number }> } }>('/api/reports/inventory')
   }
 }

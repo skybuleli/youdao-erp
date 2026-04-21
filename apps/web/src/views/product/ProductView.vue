@@ -24,6 +24,15 @@
       </button>
     </div>
 
+    <!-- Supplier Filter -->
+    <div class="supplier-filter">
+      <span class="filter-label">供应商:</span>
+      <select v-model.number="selectedSupplier" class="kimi-select supplier-select">
+        <option :value="null">全部供应商</option>
+        <option v-for="s in suppliers" :key="s.id" :value="s.id">{{ s.name }}</option>
+      </select>
+    </div>
+
     <!-- Loading -->
     <div v-if="loading" class="loading-state">加载中...</div>
 
@@ -36,6 +45,10 @@
           <div class="product-meta">
             <span class="product-code">{{ product.code }}</span>
             <span class="product-unit">{{ product.spec }}</span>
+          </div>
+          <div class="product-supplier">
+            <span class="supplier-label">供应商:</span>
+            <span class="supplier-name">{{ product.supplierName || '未关联' }}</span>
           </div>
           <div class="product-bottom">
             <span class="product-price amount">¥{{ product.price }}</span>
@@ -95,9 +108,16 @@
               </select>
             </div>
             <div class="form-group">
-              <label>库存预警值</label>
-              <input v-model.number="form.minStock" type="number" class="kimi-input" placeholder="10" />
+              <label>供应商 <span style="color: var(--color-danger)">*</span></label>
+              <select v-model.number="form.supplierId" class="kimi-select">
+                <option :value="null">请选择供应商</option>
+                <option v-for="s in suppliers" :key="s.id" :value="s.id">{{ s.name }}</option>
+              </select>
             </div>
+          </div>
+          <div class="form-group">
+            <label>库存预警值</label>
+            <input v-model.number="form.minStock" type="number" class="kimi-input" placeholder="10" />
           </div>
         </div>
         <div class="modal-footer">
@@ -111,14 +131,16 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch, computed } from 'vue'
-import { productApi } from '@/api'
+import { productApi, partnerApi } from '@/api'
 import type { Product } from '@/api/product'
 
 const searchQuery = ref('')
 const selectedCategory = ref(0)
+const selectedSupplier = ref<number | null>(null)
 const showAddModal = ref(false)
 const editingProduct = ref<Product | null>(null)
 const products = ref<Product[]>([])
+const suppliers = ref<Array<{ id: number; name: string }>>([])
 const loading = ref(false)
 
 const categories = [
@@ -144,18 +166,30 @@ const filteredProducts = computed(() => {
     spec: p.specs || '',
     unit: p.unit,
     categoryId: p.categoryId ?? 5,
+    supplierId: p.supplierId,
+    supplierName: p.supplierName,
     stock: p.stockQty,
     minStock: p.minStock,
     icon: iconMap[p.categoryId ?? 5] || '📦'
   }))
 })
 
+async function loadSuppliers() {
+  try {
+    const res = await partnerApi.list({ type: 'supplier' })
+    suppliers.value = res.data.map((s: any) => ({ id: s.id, name: s.name }))
+  } catch (e: any) {
+    console.error('加载供应商失败', e.message)
+  }
+}
+
 async function loadProducts() {
   loading.value = true
   try {
     const res = await productApi.list({
       search: searchQuery.value || undefined,
-      category: selectedCategory.value === 0 ? undefined : String(selectedCategory.value)
+      category: selectedCategory.value === 0 ? undefined : String(selectedCategory.value),
+      supplier: selectedSupplier.value ? String(selectedSupplier.value) : undefined
     })
     products.value = res.data
   } catch (err: any) {
@@ -165,14 +199,17 @@ async function loadProducts() {
   }
 }
 
-watch([searchQuery, selectedCategory], () => {
+watch([searchQuery, selectedCategory, selectedSupplier], () => {
   loadProducts()
 }, { debounce: 300 } as any)
 
-onMounted(loadProducts)
+onMounted(() => {
+  loadSuppliers()
+  loadProducts()
+})
 
 const form = reactive({
-  name: '', code: '', price: 0, cost: 0, spec: '', unit: '', categoryId: 5, minStock: 10
+  name: '', code: '', price: 0, cost: 0, spec: '', unit: '', categoryId: 5, supplierId: null as number | null, minStock: 10
 })
 
 function stockClass(stock: number, min: number) {
@@ -183,7 +220,7 @@ function stockClass(stock: number, min: number) {
 
 function openAddModal() {
   editingProduct.value = null
-  Object.assign(form, { name: '', code: '', price: 0, cost: 0, spec: '', unit: '', categoryId: 5, minStock: 10 })
+  Object.assign(form, { name: '', code: '', price: 0, cost: 0, spec: '', unit: '', categoryId: 5, supplierId: null, minStock: 10 })
   showAddModal.value = true
 }
 
@@ -197,6 +234,7 @@ function editProduct(product: any) {
     spec: product.spec || '',
     unit: product.unit,
     categoryId: product.categoryId,
+    supplierId: product.supplierId,
     minStock: product.minStock
   })
   showAddModal.value = true
@@ -207,6 +245,10 @@ async function saveProduct() {
     alert('请填写商品名称和条码')
     return
   }
+  if (!form.supplierId) {
+    alert('请选择供应商')
+    return
+  }
   const payload = {
     name: form.name,
     barcode: form.code,
@@ -215,6 +257,7 @@ async function saveProduct() {
     specs: form.spec,
     unit: form.unit,
     categoryId: form.categoryId,
+    supplierId: form.supplierId,
     minStock: form.minStock
   }
   try {
@@ -225,7 +268,7 @@ async function saveProduct() {
     }
     showAddModal.value = false
     editingProduct.value = null
-    Object.assign(form, { name: '', code: '', price: 0, cost: 0, spec: '', unit: '', categoryId: 5, minStock: 10 })
+    Object.assign(form, { name: '', code: '', price: 0, cost: 0, spec: '', unit: '', categoryId: 5, supplierId: null, minStock: 10 })
     await loadProducts()
   } catch (err: any) {
     alert(err.message || '保存失败')
@@ -327,6 +370,39 @@ async function deleteProduct(product: any) {
   background: var(--accent-subtle); border: 1px solid var(--accent-border); color: var(--accent-primary);
   border-color: transparent;
   color: white;
+}
+
+.supplier-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.supplier-select {
+  flex: 1;
+  max-width: 240px;
+}
+
+.product-supplier {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.supplier-label {
+  color: var(--text-tertiary);
+}
+
+.supplier-name {
+  color: var(--text-secondary);
 }
 
 .product-grid {

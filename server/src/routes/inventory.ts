@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { eq, desc, sql, like } from 'drizzle-orm'
+import { eq, and, desc, sql, like } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import { z } from 'zod'
 import * as schema from '../schema'
@@ -7,31 +7,49 @@ import type { Env } from '../index'
 
 export const inventoryRouter = new Hono<{ Bindings: Env }>()
 
-// GET /api/inventory — 库存列表
+// GET /api/inventory — 库存列表（join partners 获取 supplierName）
 inventoryRouter.get('/', async (c) => {
   const db = drizzle(c.env.DB, { schema })
   const search = c.req.query('search')
   const warning = c.req.query('warning')
+  const supplier = c.req.query('supplier')
 
-  let conditions = undefined
+  const filters = []
   if (search) {
-    conditions = like(schema.products.name, `%${search}%`)
+    filters.push(like(schema.products.name, `%${search}%`))
+  }
+  if (supplier) {
+    const supId = Number(supplier)
+    if (!isNaN(supId)) {
+      filters.push(eq(schema.products.supplierId, supId))
+    }
   }
 
-  const items = await db.select().from(schema.products)
+  const conditions = filters.length > 0
+    ? (filters.length === 1 ? filters[0] : and(...filters))
+    : undefined
+
+  const rows = await db.select({
+    product: schema.products,
+    supplierName: schema.partners.name
+  })
+    .from(schema.products)
+    .leftJoin(schema.partners, eq(schema.products.supplierId, schema.partners.id))
     .where(conditions)
     .orderBy(desc(schema.products.createdAt))
 
-  const result = items.map(p => ({
-    productId: p.id,
-    productName: p.name,
-    barcode: p.barcode,
+  const result = rows.map(r => ({
+    productId: r.product.id,
+    productName: r.product.name,
+    barcode: r.product.barcode,
+    supplierId: r.product.supplierId,
+    supplierName: r.supplierName,
     warehouseId: 1,
     warehouseName: '总仓',
-    stockQty: p.stockQty ?? 0,
-    minStock: p.minStock ?? 0,
-    maxStock: p.maxStock ?? 999999,
-    warning: (p.stockQty ?? 0) <= (p.minStock ?? 0)
+    stockQty: r.product.stockQty ?? 0,
+    minStock: r.product.minStock ?? 0,
+    maxStock: r.product.maxStock ?? 999999,
+    warning: (r.product.stockQty ?? 0) <= (r.product.minStock ?? 0)
   }))
 
   if (warning === 'true') {

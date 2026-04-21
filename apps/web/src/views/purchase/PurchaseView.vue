@@ -70,11 +70,21 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import { orderApi } from '@/api'
+import { orderApi, partnerApi } from '@/api'
 
 const statusFilter = ref('all')
 const orders = ref<Array<{ id: number; no: string; status: string; supplier: string; items: Array<{ name: string }>; totalQty: number; totalAmount: number; date: string }>>([])
+const partnerMap = ref<Map<number, string>>(new Map())
 const loading = ref(false)
+
+async function loadPartners() {
+  try {
+    const res = await partnerApi.list()
+    partnerMap.value = new Map(res.data.map((p: any) => [p.id, p.name]))
+  } catch (e: any) {
+    console.error('加载往来单位失败', e.message)
+  }
+}
 
 async function loadData() {
   loading.value = true
@@ -87,7 +97,7 @@ async function loadData() {
       id: o.id,
       no: o.orderNo,
       status: o.status,
-      supplier: `往来单位#${o.partnerId}`,
+      supplier: partnerMap.value.get(o.partnerId) || `往来单位#${o.partnerId}`,
       items: (o.items || []).map((i: any) => ({ name: `商品#${i.productId}` })),
       totalQty: (o.items || []).reduce((sum: number, i: any) => sum + i.qty, 0),
       totalAmount: o.totalAmount,
@@ -129,7 +139,11 @@ function viewDetail(order: any) {
 }
 
 watch(statusFilter, loadData)
-onMounted(loadData)
+
+onMounted(async () => {
+  await loadPartners()
+  await loadData()
+})
 </script>
 
 <style scoped>

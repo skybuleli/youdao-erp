@@ -11,11 +11,10 @@
     <div class="info-card">
       <div class="form-row">
         <div class="form-group">
-          <label>供应商</label>
-          <select v-model="form.supplier" class="kimi-select">
-            <option value="">选择供应商</option>
-            <option>供应商A</option>
-            <option>供应商B</option>
+          <label>供应商 <span style="color: var(--color-danger)">*</span></label>
+          <select v-model.number="form.supplierId" class="kimi-select" @change="onSupplierChange">
+            <option :value="null">选择供应商</option>
+            <option v-for="s in suppliers" :key="s.id" :value="s.id">{{ s.name }}</option>
           </select>
         </div>
         <div class="form-group">
@@ -32,7 +31,7 @@
     <div class="product-section">
       <div class="section-title">
         <span>采购商品</span>
-        <button class="add-btn" @click="showProductPicker = true">➕ 添加商品</button>
+        <button class="add-btn" :disabled="!form.supplierId" @click="showProductPicker = true">➕ 添加商品</button>
       </div>
 
       <div v-if="items.length === 0" class="empty-state">
@@ -154,7 +153,7 @@ const pickerQuery = ref('')
 const loading = ref(false)
 
 const form = reactive({
-  supplier: '',
+  supplierId: null as number | null,
   warehouse: '总仓',
   discount: 0,
   remark: ''
@@ -178,6 +177,7 @@ async function loadData() {
       spec: p.specs || '',
       cost: p.purchasePrice,
       stock: p.stockQty,
+      supplierId: p.supplierId,
       icon: '📦'
     }))
     suppliers.value = partnerRes.data
@@ -188,10 +188,24 @@ async function loadData() {
   }
 }
 
+function onSupplierChange() {
+  // 切换供应商时清空已选商品
+  items.value = []
+}
+
 const filteredPickerProducts = computed(() => {
-  if (!pickerQuery.value) return allProducts.value
-  const q = pickerQuery.value.toLowerCase()
-  return allProducts.value.filter((p: any) => p.name.toLowerCase().includes(q))
+  let list = allProducts.value
+  // 严格过滤：只显示当前供应商的商品
+  if (form.supplierId) {
+    list = list.filter((p: any) => p.supplierId === form.supplierId)
+  } else {
+    list = []
+  }
+  if (pickerQuery.value) {
+    const q = pickerQuery.value.toLowerCase()
+    list = list.filter((p: any) => p.name.toLowerCase().includes(q))
+  }
+  return list
 })
 
 const totalQty = computed(() => items.value.reduce((sum, i) => sum + i.qty, 0))
@@ -231,16 +245,8 @@ function removeItem(index: number) {
   items.value.splice(index, 1)
 }
 
-function getPartnerId() {
-  if (!form.supplier) return 1
-  const idx = form.supplier === '供应商A' ? 0 : form.supplier === '供应商B' ? 1 : -1
-  if (idx >= 0 && suppliers.value[idx]) return suppliers.value[idx].id
-  const found = suppliers.value.find((s: any) => s.name === form.supplier)
-  return found ? found.id : 1
-}
-
 async function submitOrder() {
-  if (!form.supplier) {
+  if (!form.supplierId) {
     alert('请选择供应商')
     return
   }
@@ -251,7 +257,7 @@ async function submitOrder() {
   try {
     await orderApi.create({
       type: 'purchase',
-      partnerId: getPartnerId(),
+      partnerId: form.supplierId,
       discountAmount: form.discount,
       remark: form.remark,
       items: items.value.map(i => ({

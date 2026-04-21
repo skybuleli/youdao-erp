@@ -101,6 +101,21 @@ orderRouter.post('/', async (c) => {
     }
   }
 
+  // 如果是采购单，验证所有商品必须属于所选供应商
+  if (data.type === 'purchase') {
+    for (const item of data.items) {
+      const product = await db.select().from(schema.products)
+        .where(eq(schema.products.id, item.productId))
+        .get()
+      if (!product) {
+        return c.json({ error: `商品 ${item.productId} 不存在` }, 400)
+      }
+      if (product.supplierId !== data.partnerId) {
+        return c.json({ error: `商品「${product.name}」不属于所选供应商，无法采购` }, 400)
+      }
+    }
+  }
+
   // 创建订单 + 订单项 + 库存变动（事务）
   const order = await db.insert(schema.orders).values({
     orderNo,

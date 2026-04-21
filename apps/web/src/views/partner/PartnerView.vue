@@ -51,21 +51,23 @@
         </div>
         <div class="partner-actions">
           <button class="action-btn" @click="callPartner(partner.phone)">📞 打电话</button>
-          <button class="action-btn primary" @click="viewBills(partner)">📋 查看账单</button>
+          <button class="action-btn" @click="openDetail(partner)">📦 供应商品</button>
+          <button class="action-btn primary" @click="editPartner(partner)">✏️ 编辑</button>
+          <button class="action-btn danger" @click="deletePartner(partner)">🗑️ 删除</button>
         </div>
       </div>
     </div>
 
     <!-- FAB -->
-    <button class="fab" @click="showAddModal = true">
+    <button class="fab" @click="openAddModal">
       <span>➕</span>
     </button>
 
-    <!-- Add Modal -->
+    <!-- Add/Edit Modal -->
     <div v-if="showAddModal" class="modal-overlay" @click.self="showAddModal = false">
       <div class="modal-panel">
         <div class="modal-header">
-          <h3>新增往来单位</h3>
+          <h3>{{ editingPartner ? '编辑往来单位' : '新增往来单位' }}</h3>
           <button class="close-btn" @click="showAddModal = false">✕</button>
         </div>
         <div class="modal-body">
@@ -106,16 +108,50 @@
         </div>
       </div>
     </div>
+
+    <!-- Detail Modal: Supplier Products -->
+    <div v-if="showDetailModal" class="modal-overlay" @click.self="showDetailModal = false">
+      <div class="modal-panel">
+        <div class="modal-header">
+          <h3>📦 {{ detailPartner?.name }} — 供应商品</h3>
+          <button class="close-btn" @click="showDetailModal = false">✕</button>
+        </div>
+        <div class="modal-body">
+          <div v-if="detailProducts.length === 0" class="empty-state">
+            <span class="empty-icon">📦</span>
+            <span>该供应商暂无商品</span>
+          </div>
+          <div v-else class="detail-product-list">
+            <div v-for="p in detailProducts" :key="p.id" class="detail-product-item">
+              <div class="dp-name">{{ p.name }}</div>
+              <div class="dp-meta">
+                <span>条码: {{ p.barcode || '-' }}</span>
+                <span>库存: {{ p.stockQty }}</span>
+                <span>进价: ¥{{ p.purchasePrice }}</span>
+                <span>售价: ¥{{ p.salePrice }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" @click="showDetailModal = false">关闭</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, watch } from 'vue'
-import { partnerApi } from '@/api'
+import { partnerApi, productApi } from '@/api'
 
 const activeTab = ref('all')
 const searchQuery = ref('')
 const showAddModal = ref(false)
+const showDetailModal = ref(false)
+const editingPartner = ref<any>(null)
+const detailPartner = ref<any>(null)
+const detailProducts = ref<Array<any>>([])
 const loading = ref(false)
 const partners = ref<Array<any>>([])
 
@@ -165,12 +201,51 @@ const form = reactive({
   address: ''
 })
 
-function callPartner(phone: string) {
-  window.location.href = `tel:${phone}`
+function openAddModal() {
+  editingPartner.value = null
+  Object.assign(form, { type: 'customer', name: '', contact: '', phone: '', address: '' })
+  showAddModal.value = true
 }
 
-function viewBills(partner: any) {
-  alert(`查看 ${partner.name} 的账单（待实现）`)
+function editPartner(partner: any) {
+  editingPartner.value = partner
+  Object.assign(form, {
+    type: partner.type,
+    name: partner.name,
+    contact: partner.contact || '',
+    phone: partner.phone || '',
+    address: partner.address || ''
+  })
+  showAddModal.value = true
+}
+
+async function deletePartner(partner: any) {
+  if (!confirm(`确定要删除「${partner.name}」吗？如果该供应商下还有商品，将无法删除。`)) return
+  try {
+    await partnerApi.delete(partner.id)
+    await loadData()
+    alert('删除成功')
+  } catch (e: any) {
+    alert(e.message || '删除失败')
+  }
+}
+
+async function openDetail(partner: any) {
+  detailPartner.value = partner
+  showDetailModal.value = true
+  detailProducts.value = []
+  if (partner.type === 'supplier') {
+    try {
+      const res = await productApi.list({ supplier: String(partner.id) })
+      detailProducts.value = res.data
+    } catch (e: any) {
+      alert(e.message || '加载商品失败')
+    }
+  }
+}
+
+function callPartner(phone: string) {
+  window.location.href = `tel:${phone}`
 }
 
 async function savePartner() {
@@ -179,14 +254,25 @@ async function savePartner() {
     return
   }
   try {
-    await partnerApi.create({
-      type: form.type as 'customer' | 'supplier',
-      name: form.name,
-      contact: form.contact,
-      phone: form.phone,
-      address: form.address
-    })
+    if (editingPartner.value) {
+      await partnerApi.update(editingPartner.value.id, {
+        type: form.type as 'customer' | 'supplier',
+        name: form.name,
+        contact: form.contact,
+        phone: form.phone,
+        address: form.address
+      })
+    } else {
+      await partnerApi.create({
+        type: form.type as 'customer' | 'supplier',
+        name: form.name,
+        contact: form.contact,
+        phone: form.phone,
+        address: form.address
+      })
+    }
     showAddModal.value = false
+    editingPartner.value = null
     Object.assign(form, { type: 'customer', name: '', contact: '', phone: '', address: '' })
     await loadData()
     alert('保存成功')
@@ -365,26 +451,35 @@ onMounted(loadData)
 }
 
 .partner-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
 
 .action-btn {
-  flex: 1;
-  height: 40px;
+  height: 36px;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 12px;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .action-btn.primary {
   background: var(--gradient-subtle);
   border-color: #7C5CFC;
   color: var(--text-primary);
+}
+
+.action-btn.danger {
+  color: var(--color-danger);
+}
+
+.action-btn.danger:hover {
+  background: rgba(239, 74, 74, 0.1);
 }
 
 .fab {
@@ -399,14 +494,12 @@ onMounted(loadData)
   color: white;
   font-size: 24px;
   cursor: pointer;
-  
   z-index: 50;
   transition: all 0.2s;
 }
 
 .fab:hover {
   transform: scale(1.05);
-  
 }
 
 /* Modal */
@@ -538,6 +631,47 @@ onMounted(loadData)
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  
+}
+
+/* Detail product list */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px;
+  color: var(--text-tertiary);
+}
+
+.empty-icon {
+  font-size: 48px;
+  opacity: 0.5;
+}
+
+.detail-product-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-product-item {
+  padding: 12px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.dp-name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.dp-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 </style>

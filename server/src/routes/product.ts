@@ -9,6 +9,7 @@ const productSchema = z.object({
   barcode: z.string().optional(),
   name: z.string().min(1),
   categoryId: z.number().optional(),
+  supplierId: z.number().optional(),
   specs: z.string().optional(),
   unit: z.string().min(1),
   purchasePrice: z.number().min(0).optional(),
@@ -20,13 +21,14 @@ const productSchema = z.object({
 const querySchema = z.object({
   search: z.string().optional(),
   category: z.string().optional(),
+  supplier: z.string().optional(),
   page: z.string().optional(),
   pageSize: z.string().optional()
 })
 
 export const productRouter = new Hono<{ Bindings: Env }>()
 
-// GET /api/products — 列表
+// GET /api/products — 列表（join partners 获取 supplierName）
 productRouter.get('/', async (c) => {
   const db = drizzle(c.env.DB, { schema })
   const query = querySchema.safeParse(c.req.query())
@@ -34,12 +36,11 @@ productRouter.get('/', async (c) => {
     return c.json({ error: 'Invalid query parameters' }, 400)
   }
 
-  const { search, category, page, pageSize } = query.data
+  const { search, category, supplier, page, pageSize } = query.data
   const pageNum = Math.max(1, Number(page || 1))
   const limit = Math.min(100, Math.max(1, Number(pageSize || 20)))
   const offset = (pageNum - 1) * limit
 
-  let conditions = undefined
   const filters = []
   if (search) {
     filters.push(like(schema.products.name, `%${search}%`))
@@ -50,15 +51,33 @@ productRouter.get('/', async (c) => {
       filters.push(eq(schema.products.categoryId, catId))
     }
   }
-  if (filters.length > 0) {
-    conditions = filters.length === 1 ? filters[0] : and(...filters)
+  if (supplier) {
+    const supId = Number(supplier)
+    if (!isNaN(supId)) {
+      filters.push(eq(schema.products.supplierId, supId))
+    }
   }
 
-  const items = await db.select().from(schema.products)
+  const conditions = filters.length > 0
+    ? (filters.length === 1 ? filters[0] : and(...filters))
+    : undefined
+
+  // leftJoin partners to get supplierName
+  const rows = await db.select({
+    product: schema.products,
+    supplierName: schema.partners.name
+  })
+    .from(schema.products)
+    .leftJoin(schema.partners, eq(schema.products.supplierId, schema.partners.id))
     .where(conditions)
     .orderBy(desc(schema.products.createdAt))
     .limit(limit)
     .offset(offset)
+
+  const items = rows.map(r => ({
+    ...r.product,
+    supplierName: r.supplierName
+  }))
 
   const countResult = await db.select({ count: sql<number>`count(*)` }).from(schema.products).where(conditions)
   const total = countResult[0]?.count || 0
@@ -77,10 +96,18 @@ productRouter.get('/:id', async (c) => {
   const id = Number(c.req.param('id'))
   if (isNaN(id)) return c.json({ error: 'Invalid id' }, 400)
 
-  const item = await db.select().from(schema.products).where(eq(schema.products.id, id)).get()
-  if (!item) return c.json({ error: 'Product not found' }, 404)
+  const rows = await db.select({
+    product: schema.products,
+    supplierName: schema.partners.name
+  })
+    .from(schema.products)
+    .leftJoin(schema.partners, eq(schema.products.supplierId, schema.partners.id))
+    .where(eq(schema.products.id, id))
+    .get()
 
-  return c.json({ data: item })
+  if (!rows) return c.json({ error: 'Product not found' }, 404)
+
+  return c.json({ data: { ...rows.product, supplierName: rows.supplierName } })
 })
 
 // POST /api/products — 创建
