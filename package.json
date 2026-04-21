@@ -1,0 +1,44 @@
+{
+  "name": "youdao-erp",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "有道食品经销存管理系统 - Kimi风格全栈进销存",
+  "scripts": {
+    "dev": "pnpm --filter @youdao-erp/web dev",
+    "check": "pnpm -r run check",
+    "test": "pnpm -r run test",
+    "build:web": "pnpm --filter @youdao-erp/web build",
+    "build:server": "pnpm --filter @youdao-erp/server build",
+    "build": "pnpm run build:web && pnpm run build:server",
+    "deploy:web": "pnpm --filter @youdao-erp/web deploy",
+    "deploy:api": "pnpm --filter @youdao-erp/server deploy",
+    "deploy": "pnpm run deploy:web && pnpm run deploy:api",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply youdao-erp-db --local",
+    "db:migrate": "wrangler d1 migrations apply youdao-erp-db",
+    "db:studio": "drizzle-kit studio",
+    "android:sync": "pnpm --filter @youdao-erp/web android:sync",
+    "android:build": "pnpm --filter @youdao-erp/web android:build",
+    "android:open": "pnpm --filter @youdao-erp/web android:open"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241218.0",
+    "@eslint/js": "^9.0.0",
+    "drizzle-kit": "^0.30.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-vue": "^10.8.0",
+    "globals": "^17.5.0",
+    "typescript": "^5.4.0",
+    "typescript-eslint": "^8.59.0",
+    "vite": "^6.0.0",
+    "vue-eslint-parser": "^10.4.0",
+    "wrangler": "^4.84.1"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "server"
+  ]
+}
