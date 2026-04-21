@@ -2,7 +2,7 @@
 
 > **Youdao ERP** — 面向食品/日用品行业的智能进销存管理解决方案
 > 
-> 设计风格：Kimi AI 科技风（深色默认 + 可切换浅色）
+> 设计风格：Linear 极简科技风（深色默认 + 可切换浅色）
 
 ---
 
@@ -176,11 +176,11 @@ wrangler secret put JWT_SECRET
 详见 [docs/design/ui-design-spec.md](./design/ui-design-spec.md)
 
 核心设计元素：
-- **品牌渐变**：紫色 `#8B5CF6` → 粉色 `#EC4899`
+- **品牌色**：紫蓝 `#7C5CFC`
 - **深色模式**：默认主题，支持一键切换浅色
-- **字体**：Outfit + Noto Sans SC
-- **圆角**：12px-16px 大圆角卡片
-- **动效**：页面过渡、按钮悬停发光、库存预警脉冲
+- **字体**：Inter + Noto Sans SC
+- **圆角**：6px-10px 克制圆角
+- **动效**：页面过渡、按钮微交互、库存预警脉冲
 
 ---
 
