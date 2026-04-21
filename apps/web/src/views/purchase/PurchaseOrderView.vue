@@ -363,7 +363,7 @@ onMounted(loadData)
 .kimi-input:focus,
 .kimi-select:focus,
 .kimi-textarea:focus {
-  border-color: #8B5CF6;
+  border-color: #7C5CFC;
   outline: none;
 }
 
@@ -384,7 +384,7 @@ onMounted(loadData)
 
 .add-btn {
   background: var(--gradient-subtle);
-  border: 1px solid #8B5CF6;
+  border: 1px solid #7C5CFC;
   border-radius: var(--radius-md);
   color: var(--text-primary);
   font-size: 13px;
@@ -566,19 +566,19 @@ onMounted(loadData)
 .btn-submit {
   height: 48px;
   padding: 0 32px;
-  background: var(--gradient-primary);
+  background: var(--accent-primary);
   border: none;
   border-radius: var(--radius-md);
   color: white;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: var(--shadow-glow-purple);
+  
 }
 
 .btn-submit:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-glow-pink);
+  
 }
 
 .btn-submit:active {
@@ -698,6 +698,6 @@ onMounted(loadData)
 
 .picker-add {
   font-size: 18px;
-  color: #8B5CF6;
+  color: #7C5CFC;
 }
 </style>

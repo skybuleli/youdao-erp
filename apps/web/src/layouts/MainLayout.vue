@@ -271,7 +271,7 @@ function logout() {
 .nav-item.active {
   background: var(--gradient-subtle);
   color: var(--text-primary);
-  border-left: 3px solid #8B5CF6;
+  border-left: 3px solid #7C5CFC;
 }
 
 .nav-icon {
@@ -361,7 +361,7 @@ function logout() {
 }
 
 .bottom-nav-item.active {
-  color: #8B5CF6;
+  color: #7C5CFC;
 }
 
 .bottom-icon {

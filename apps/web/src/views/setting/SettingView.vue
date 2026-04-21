@@ -531,7 +531,7 @@ function logout() {
 }
 
 .kimi-input:focus {
-  border-color: #8B5CF6;
+  border-color: #7C5CFC;
   outline: none;
 }
 
@@ -556,13 +556,13 @@ function logout() {
 .btn-primary {
   flex: 1;
   height: 48px;
-  background: var(--gradient-primary);
+  background: var(--accent-primary);
   border: none;
   border-radius: var(--radius-md);
   color: white;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: var(--shadow-glow-purple);
+  
 }
 </style>

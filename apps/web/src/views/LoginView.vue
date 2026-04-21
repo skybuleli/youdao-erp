@@ -146,7 +146,7 @@ async function handleLogin() {
 
 .btn-login {
   height: 48px;
-  background: var(--gradient-primary);
+  background: var(--accent-primary);
   border: none;
   border-radius: var(--radius-md);
   color: white;
@@ -159,7 +159,7 @@ async function handleLogin() {
 
 .btn-login:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-glow-purple);
+  
 }
 
 .btn-login:active {

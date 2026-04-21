@@ -50,7 +50,7 @@
             </div>
             <div>
               <span class="label">金额</span>
-              <span class="value amount" style="color: #8B5CF6;">¥{{ order.totalAmount.toFixed(2) }}</span>
+              <span class="value amount" style="color: #7C5CFC;">¥{{ order.totalAmount.toFixed(2) }}</span>
             </div>
           </div>
         </div>
@@ -189,7 +189,7 @@ onMounted(loadData)
 .btn-primary {
   height: 44px;
   padding: 0 16px;
-  background: var(--gradient-primary);
+  background: var(--accent-primary);
   border: none;
   border-radius: var(--radius-md);
   color: white;
@@ -201,7 +201,7 @@ onMounted(loadData)
   gap: 4px;
   white-space: nowrap;
   text-decoration: none;
-  box-shadow: var(--shadow-glow-purple);
+  
 }
 
 .order-list {
@@ -318,7 +318,7 @@ onMounted(loadData)
 
 .action-btn.primary {
   background: var(--gradient-subtle);
-  border-color: #8B5CF6;
+  border-color: #7C5CFC;
   color: var(--text-primary);
 }
 </style>

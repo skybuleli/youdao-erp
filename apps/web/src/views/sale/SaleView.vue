@@ -191,14 +191,14 @@ onMounted(loadData)
 }
 
 .kimi-input:focus {
-  border-color: #8B5CF6;
+  border-color: #7C5CFC;
   outline: none;
 }
 
 .btn-primary {
   height: 44px;
   padding: 0 16px;
-  background: var(--gradient-primary);
+  background: var(--accent-primary);
   border: none;
   border-radius: var(--radius-md);
   color: white;
@@ -210,7 +210,7 @@ onMounted(loadData)
   gap: 4px;
   white-space: nowrap;
   text-decoration: none;
-  box-shadow: var(--shadow-glow-purple);
+  
 }
 
 .order-list {
@@ -258,8 +258,8 @@ onMounted(loadData)
 }
 
 .order-type.sale {
-  background: rgba(139, 92, 246, 0.15);
-  color: #8B5CF6;
+  background: rgba(124, 92, 252, 0.15);
+  color: #7C5CFC;
 }
 
 .order-type.return {

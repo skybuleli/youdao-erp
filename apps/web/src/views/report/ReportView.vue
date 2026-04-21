@@ -16,7 +16,7 @@
     <!-- Summary Cards -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(139, 92, 246, 0.15);">📈</div>
+        <div class="stat-icon" style="background: rgba(124, 92, 252, 0.15);">📈</div>
         <div class="stat-info">
           <span class="stat-label">销售收入</span>
           <span class="stat-value amount gradient-text">¥{{ formatNumber(report.sales) }}</span>
@@ -172,8 +172,8 @@ const topProducts = ref([
 ])
 
 const categoryData = ref([
-  { name: '饮料', percent: 35, color: '#8B5CF6' },
-  { name: '零食', percent: 25, color: '#EC4899' },
+  { name: '饮料', percent: 35, color: '#7C5CFC' },
+  { name: '零食', percent: 25, color: '#5B8DEF' },
   { name: '粮油', percent: 20, color: '#3B82F6' },
   { name: '日用', percent: 15, color: '#10B981' },
   { name: '其他', percent: 5, color: '#F59E0B' }
@@ -205,7 +205,7 @@ async function loadData() {
       categoryData.value = profitRes.data.byCategory.map((c: any, i: number) => ({
         name: c.category,
         percent: Math.round(c.sales / profitRes.data.totalSales * 100),
-        color: ['#8B5CF6', '#EC4899', '#3B82F6', '#10B981', '#F59E0B'][i % 5]
+        color: ['#7C5CFC', '#5B8DEF', '#3B82F6', '#10B981', '#F59E0B'][i % 5]
       }))
     }
     if (salesRes.data && salesRes.data.length > 0) {
@@ -254,7 +254,7 @@ onMounted(loadData)
 }
 
 .date-btn.active {
-  background: var(--gradient-primary);
+  background: var(--accent-subtle); border: 1px solid var(--accent-border); color: var(--accent-primary);
   border-color: transparent;
   color: white;
 }

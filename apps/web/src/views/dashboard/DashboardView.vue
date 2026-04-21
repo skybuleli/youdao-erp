@@ -3,7 +3,7 @@
     <!-- Stats Cards -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(139, 92, 246, 0.15);">💰</div>
+        <div class="stat-icon" style="background: rgba(124, 92, 252, 0.15);">💰</div>
         <div class="stat-info">
           <span class="stat-label">今日销售</span>
           <span class="stat-value gradient-text amount">¥{{ formatNumber(stats.todaySales) }}</span>
@@ -371,7 +371,7 @@ function formatNumber(n: number) {
 }
 
 .link {
-  color: #8B5CF6;
+  color: #7C5CFC;
   font-size: 14px;
   text-decoration: none;
 }
@@ -413,8 +413,8 @@ function formatNumber(n: number) {
 }
 
 .order-type.sale {
-  background: rgba(139, 92, 246, 0.15);
-  color: #8B5CF6;
+  background: rgba(124, 92, 252, 0.15);
+  color: #7C5CFC;
 }
 
 .order-type.purchase {
@@ -488,14 +488,14 @@ function formatNumber(n: number) {
 }
 
 .action-btn.primary {
-  background: var(--gradient-primary);
+  background: var(--accent-primary);
   border: none;
   color: white;
-  box-shadow: var(--shadow-glow-purple);
+  
 }
 
 .action-btn.primary:hover {
-  box-shadow: var(--shadow-glow-pink);
+  
 }
 
 .action-icon {

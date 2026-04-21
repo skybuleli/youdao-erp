@@ -1,16 +1,17 @@
-# Kimi ERP UI Design Specification
+# Youdao ERP UI Design Specification
 
-> **有道食品经销存管理系统** - 视觉设计规范 v1.0
-> **设计风格**: Kimi AI 科技风（深色默认 + 可切换浅色）
-> **品牌渐变**: 紫色 #8B5CF6 → 粉色 #EC4899
+> **有道食品经销存管理系统** - 视觉设计规范 v2.0
+> **设计风格**: Linear 极简科技风（深色默认 + 可切换浅色）
+> **品牌色**: 紫蓝 #7C5CFC
+> **参考**: Linear.app 设计哲学 — 极致深色、高对比度、精确边框
 
 ---
 
 ## 1. 设计概述
 
-**设计哲学**: 将 Kimi AI 的未来科技感与进销存的业务效率结合，打造一套"看起来像 AI 智能系统"的经销商管理工具。
+**设计哲学**: 借鉴 Linear 的极简主义，用精确的边框、克制的色彩和深邃的背景层级，打造一套专业、冷静、高效的经销商管理工具。
 
-**核心关键词**: 智能 · 高效 · 精致 · 未来感
+**核心关键词**: 精确 · 克制 · 深邃 · 高效
 
 **适用场景**: 食品/日用品行业进销存管理，支持 PC 网页端 + Android 移动端
 
@@ -23,52 +24,61 @@
 ```css
 /* 深色模式（默认） */
 :root {
-  --bg-base: #0A0A0F;
-  --bg-elevated: #13131F;
-  --bg-surface: #1C1C2E;
-  --bg-hover: #252538;
+  --bg-base: #0C0C0C;
+  --bg-elevated: #111111;
+  --bg-surface: #161616;
+  --bg-hover: #1C1C1C;
+  --bg-active: #222222;
 
-  --gradient-primary: linear-gradient(135deg, #8B5CF6 0%, #EC4899 100%);
-  --gradient-subtle: linear-gradient(135deg, rgba(139,92,246,0.15) 0%, rgba(236,72,153,0.15) 100%);
-  --gradient-glow: linear-gradient(135deg, rgba(139,92,246,0.4) 0%, rgba(236,72,153,0.4) 100%);
+  --accent-primary: #7C5CFC;
+  --accent-secondary: #5B8DEF;
+  --accent-hover: #9173FD;
+  --accent-subtle: rgba(124, 92, 252, 0.12);
+  --accent-border: rgba(124, 92, 252, 0.25);
 
-  --text-primary: #F8F8FC;
-  --text-secondary: #A1A1B5;
-  --text-tertiary: #6B6B80;
+  --gradient-primary: linear-gradient(135deg, #7C5CFC 0%, #5B8DEF 100%);
+  --gradient-subtle: linear-gradient(135deg, rgba(124,92,252,0.1) 0%, rgba(91,141,239,0.1) 100%);
 
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-danger: #EF4444;
-  --color-info: #3B82F6;
+  --text-primary: #FFFFFF;
+  --text-secondary: #8A8F98;
+  --text-tertiary: #6E7681;
+  --text-muted: #4A4F58;
+
+  --color-success: #4CAF7C;
+  --color-warning: #F5A623;
+  --color-danger: #EF4A4A;
+  --color-info: #4F8CFF;
 
   --border-subtle: rgba(255,255,255,0.06);
   --border-medium: rgba(255,255,255,0.1);
+  --border-strong: rgba(255,255,255,0.15);
 
-  --shadow-card: 0 4px 24px rgba(0,0,0,0.4);
-  --shadow-glow-purple: 0 0 20px rgba(139,92,246,0.3);
-  --shadow-glow-pink: 0 0 20px rgba(236,72,153,0.3);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-elevated: 0 4px 12px rgba(0,0,0,0.4);
 }
 
 /* 浅色模式 */
 [data-theme="light"] {
-  --bg-base: #F5F5FA;
+  --bg-base: #F7F7F8;
   --bg-elevated: #FFFFFF;
-  --bg-surface: #F0F0F5;
-  --bg-hover: #E8E8F0;
+  --bg-surface: #F0F0F2;
+  --bg-hover: #E8E8EA;
+  --bg-active: #E0E0E3;
 
-  --gradient-primary: linear-gradient(135deg, #7C3AED 0%, #DB2777 100%);
-  --gradient-subtle: linear-gradient(135deg, rgba(124,58,237,0.08) 0%, rgba(219,39,119,0.08) 100%);
+  --gradient-primary: linear-gradient(135deg, #6B4FD9 0%, #4A7BD9 100%);
+  --gradient-subtle: linear-gradient(135deg, rgba(107,79,217,0.08) 0%, rgba(74,123,217,0.08) 100%);
 
-  --text-primary: #111118;
-  --text-secondary: #4B4B5E;
-  --text-tertiary: #9CA3AF;
+  --text-primary: #111111;
+  --text-secondary: #5C5C66;
+  --text-tertiary: #8E8E99;
+  --text-muted: #B8B8BF;
 
   --border-subtle: rgba(0,0,0,0.06);
   --border-medium: rgba(0,0,0,0.1);
+  --border-strong: rgba(0,0,0,0.15);
 
-  --shadow-card: 0 4px 24px rgba(0,0,0,0.08);
-  --shadow-glow-purple: 0 0 20px rgba(124,58,237,0.15);
-  --shadow-glow-pink: 0 0 20px rgba(219,39,119,0.15);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-elevated: 0 4px 12px rgba(0,0,0,0.08);
 }
 ```
 
@@ -76,29 +86,26 @@
 
 | 场景 | 颜色 | 效果 |
 |------|------|------|
-| 品牌按钮 | `var(--gradient-primary)` | 紫→粉渐变，悬停发光 |
-| 数据统计高亮 | `#8B5CF6` 或渐变色文字 | 大数字使用渐变填充 |
-| 库存预警 | `#F59E0B` + 脉冲动画 | 黄色呼吸灯效果 |
-| 库存缺货 | `#EF4444` + 红色发光 | 红色光晕提示 |
-| 库存正常 | `#10B981` | 纯绿色，无发光 |
-| 选中状态 | 半透明紫色背景 + 紫色左边框 | 清晰但不刺眼 |
-| 悬浮面板 | `backdrop-blur(12px)` + 半透明背景 | 毛玻璃效果 |
+| 品牌按钮 | `var(--accent-primary)` | 纯色，悬停微亮 |
+| 数据统计高亮 | `var(--accent-primary)` | 纯色，无渐变 |
+| 库存预警 | `#F5A623` + 脉冲动画 | 黄色呼吸灯效果 |
+| 库存缺货 | `#EF4A4A` | 纯红色，无发光 |
+| 库存正常 | `#4CAF7C` | 纯绿色 |
+| 选中状态 | `var(--accent-subtle)` + 紫蓝边框 | 清晰但不刺眼 |
+| 悬浮面板 | `backdrop-blur(16px)` + 深色半透明 | 毛玻璃效果 |
+| 装饰元素 | `var(--gradient-primary)` | 仅用于 logo、rank badge 等点缀 |
 
 ---
 
 ## 3. 字体方案
 
 ```css
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap');
-
 :root {
-  --font-display: 'Outfit', 'Noto Sans SC', sans-serif;
-  --font-body: 'Noto Sans SC', -apple-system, sans-serif;
+  --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
 }
 
 .amount {
-  font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
@@ -106,10 +113,10 @@
 
 | Token | 大小 | 字重 | 用途 |
 |-------|------|------|------|
-| text-hero | 36px | 700 | 首页大金额 |
-| text-title | 24px | 600 | 页面标题 |
-| text-card-title | 18px | 600 | 卡片标题 |
-| text-body | 15px | 400 | 正文、表单标签 |
+| text-hero | 32px | 700 | 首页大金额 |
+| text-title | 22px | 600 | 页面标题 |
+| text-card-title | 16px | 600 | 卡片标题 |
+| text-body | 14px | 400 | 正文、表单标签 |
 | text-small | 13px | 400 | 辅助说明、时间 |
 | text-tiny | 11px | 500 | 标签、角标 |
 
@@ -121,15 +128,15 @@
 :root {
   --space-xs: 4px;
   --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
-  --space-2xl: 48px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
 
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
   --radius-full: 9999px;
 }
 ```
@@ -148,9 +155,9 @@
 - 快捷操作网格
 
 **设计细节**:
-- 统计卡片: `bg-elevated`, 圆角16px, 金额使用渐变色文字
-- 趋势图表: 紫色线条 + 渐变填充, Y轴网格线极淡
-- 快捷操作按钮: 48px高度, 图标+文字纵向, 紫色背景悬停发光
+- 统计卡片: `bg-elevated`, 圆角10px, 金额使用纯色高亮
+- 趋势图表: 紫蓝线条 + 渐变填充, Y轴网格线极淡
+- 快捷操作按钮: 48px高度, 图标+文字纵向, 紫蓝背景
 
 ### 5.2 POS 销售开单页
 
@@ -162,10 +169,10 @@
 - 确认收款大按钮
 
 **设计细节**:
-- 扫码区: 120px高, 虚线边框, 点击后紫色实线+发光
-- 商品卡片: 左侧图标(圆形渐变), 右侧数量调节器
+- 扫码区: 120px高, 虚线边框, 点击后紫蓝实线
+- 商品卡片: 左侧图标(圆形), 右侧数量调节器
 - 数量调节器: 40px圆形按钮, 中间数字加粗
-- 确认收款按钮: 56px高, 渐变+发光, 点击缩放动画
+- 确认收款按钮: 56px高, 纯色, 点击缩放动画
 
 ### 5.3 库存查询页
 
@@ -176,8 +183,8 @@
 
 **设计细节**:
 - 库存进度条: 根据比例动态变色(绿/黄/红)
-- 商品卡片: 库存紧张黄色脉冲, 缺货红色发光
-- 分类筛选: pill形状, 选中状态渐变
+- 商品卡片: 库存紧张黄色脉冲, 缺货红色
+- 分类筛选: pill形状, 选中状态 subtle 紫蓝背景 + 边框
 
 ---
 
@@ -187,28 +194,29 @@
 
 | 类型 | 样式 | 用途 |
 |------|------|------|
-| Primary | gradient-primary, shadow-glow-purple | 核心操作 |
-| Secondary | bg-surface, border-medium | 次要操作 |
-| Ghost | 透明, 悬停bg-hover | 文字链接 |
+| Primary | `var(--accent-primary)`, 无边框 | 核心操作 |
+| Secondary | `bg-surface`, `border-medium` | 次要操作 |
+| Ghost | 透明, 悬停 `bg-hover` | 文字链接 |
 | Danger | 红色背景/边框 | 删除作废 |
-| POS Grid | bg-elevated, 大圆角, 80x80网格 | 快捷商品 |
+| Tab Active | `accent-subtle` + 紫蓝边框 | 标签页选中 |
+| POS Grid | `bg-elevated`, 大圆角, 80x80网格 | 快捷商品 |
 
 ### 6.2 输入框
 
 ```css
 .kimi-input {
-  height: 48px;
+  height: 44px;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: 0 16px;
+  padding: 0 14px;
   color: var(--text-primary);
-  font-size: 15px;
+  font-size: 14px;
   transition: all 0.2s;
 }
 .kimi-input:focus {
-  border-color: #8B5CF6;
-  box-shadow: 0 0 0 3px rgba(139,92,246,0.15);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--accent-subtle);
   outline: none;
 }
 ```
@@ -216,15 +224,15 @@
 ### 6.3 数据表格
 
 - 表头: text-secondary, font-weight: 500
-- 行高: 56px
+- 行高: 52px
 - 行悬停: bg-hover
-- 选中行: 左侧3px紫色竖线 + 渐变背景
+- 选中行: 左侧2px紫蓝竖线 + subtle 背景
 
 ### 6.4 弹窗/抽屉
 
 - 遮罩: rgba(0,0,0,0.6) + backdrop-blur(4px)
-- 面板: bg-elevated, 底部抽屉圆角20px
-- 动画: translateY(100%) → translateY(0), 300ms ease-out
+- 面板: bg-elevated, 底部抽屉圆角12px
+- 动画: translateY(100%) → translateY(0), 250ms ease-out
 
 ---
 
@@ -235,12 +243,12 @@
 ```css
 .page-enter {
   opacity: 0;
-  transform: translateX(20px);
+  transform: translateX(8px);
 }
 .page-enter-active {
   opacity: 1;
   transform: translateX(0);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 ```
 
@@ -248,11 +256,10 @@
 
 ```css
 .btn-primary {
-  transition: all 0.2s;
+  transition: all 0.15s;
 }
 .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-glow-purple);
+  background: var(--accent-hover);
 }
 .btn-primary:active {
   transform: scale(0.97);
@@ -262,8 +269,7 @@
 ### 7.3 特殊动效
 
 - **库存预警脉冲**: @keyframes pulse-yellow
-- **扫码成功**: 紫色对勾扩散动画
-- **收款成功**: 紫色 confetti 粒子效果
+- **扫码成功**: 紫蓝对勾扩散动画
 - **数字滚动**: requestAnimationFrame 递增
 
 ---
@@ -309,3 +315,15 @@
 | Mobile | < 640px | 单列, POS全屏, 底部固定结算栏 |
 | Tablet | 640-1024px | 双列, 侧边栏可收起 |
 | Desktop | > 1024px | 三列, 左侧导航常驻 |
+
+---
+
+## 11. 设计原则（Linear 风格核心）
+
+1. **深色优先**: 默认 #0C0C0C，多层深色背景区分层级
+2. **边框精确**: 使用 1px hairline border，rgba(255,255,255,0.06) 起步
+3. **色彩克制**: 强调色仅用于交互元素，大面积保持中性
+4. **无过度装饰**: 避免大阴影、强发光、过度动画
+5. **高对比度文字**: 白色主文字，灰色层级递减
+6. **紧凑间距**: 12px-16px 为常用间距，不浪费空间
+7. **圆角克制**: 6px-10px，避免过大圆角

@@ -258,7 +258,7 @@ async function saveProduct() {
 .btn-primary {
   height: 48px;
   padding: 0 20px;
-  background: var(--gradient-primary);
+  background: var(--accent-primary);
   border: none;
   border-radius: var(--radius-md);
   color: white;
@@ -267,12 +267,12 @@ async function saveProduct() {
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
-  box-shadow: var(--shadow-glow-purple);
+  
 }
 
 .btn-primary:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-glow-pink);
+  
 }
 
 .btn-primary:active {
@@ -305,7 +305,7 @@ async function saveProduct() {
 }
 
 .filter-tab.active {
-  background: var(--gradient-primary);
+  background: var(--accent-subtle); border: 1px solid var(--accent-border); color: var(--accent-primary);
   border-color: transparent;
   color: white;
 }
@@ -373,7 +373,7 @@ async function saveProduct() {
 .product-price {
   font-size: 18px;
   font-weight: 700;
-  color: #8B5CF6;
+  color: #7C5CFC;
 }
 
 .product-stock {
@@ -510,8 +510,8 @@ async function saveProduct() {
 
 .kimi-input:focus,
 .kimi-select:focus {
-  border-color: #8B5CF6;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+  border-color: #7C5CFC;
+  box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.15);
   outline: none;
 }
 

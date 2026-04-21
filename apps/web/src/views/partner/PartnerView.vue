@@ -224,7 +224,7 @@ onMounted(loadData)
 }
 
 .tab.active {
-  background: var(--gradient-primary);
+  background: var(--accent-subtle); border: 1px solid var(--accent-border); color: var(--accent-primary);
   border-color: transparent;
   color: white;
 }
@@ -253,8 +253,8 @@ onMounted(loadData)
 }
 
 .kimi-input:focus {
-  border-color: #8B5CF6;
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+  border-color: #7C5CFC;
+  box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.15);
   outline: none;
 }
 
@@ -316,8 +316,8 @@ onMounted(loadData)
 }
 
 .partner-tag.customer {
-  background: rgba(139, 92, 246, 0.15);
-  color: #8B5CF6;
+  background: rgba(124, 92, 252, 0.15);
+  color: #7C5CFC;
 }
 
 .partner-tag.supplier {
@@ -383,7 +383,7 @@ onMounted(loadData)
 
 .action-btn.primary {
   background: var(--gradient-subtle);
-  border-color: #8B5CF6;
+  border-color: #7C5CFC;
   color: var(--text-primary);
 }
 
@@ -393,20 +393,20 @@ onMounted(loadData)
   bottom: 84px;
   width: 56px;
   height: 56px;
-  background: var(--gradient-primary);
+  background: var(--accent-primary);
   border: none;
   border-radius: 50%;
   color: white;
   font-size: 24px;
   cursor: pointer;
-  box-shadow: var(--shadow-glow-purple);
+  
   z-index: 50;
   transition: all 0.2s;
 }
 
 .fab:hover {
   transform: scale(1.05);
-  box-shadow: var(--shadow-glow-pink);
+  
 }
 
 /* Modal */
@@ -505,7 +505,7 @@ onMounted(loadData)
 }
 
 .type-btn.active {
-  background: var(--gradient-primary);
+  background: var(--accent-subtle); border: 1px solid var(--accent-border); color: var(--accent-primary);
   border-color: transparent;
   color: white;
 }
@@ -531,13 +531,13 @@ onMounted(loadData)
 .btn-primary {
   flex: 1;
   height: 48px;
-  background: var(--gradient-primary);
+  background: var(--accent-primary);
   border: none;
   border-radius: var(--radius-md);
   color: white;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: var(--shadow-glow-purple);
+  
 }
 </style>

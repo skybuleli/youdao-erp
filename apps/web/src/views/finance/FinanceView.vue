@@ -3,7 +3,7 @@
     <!-- Summary Cards -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(139, 92, 246, 0.15);">💰</div>
+        <div class="stat-icon" style="background: rgba(124, 92, 252, 0.15);">💰</div>
         <div class="stat-info">
           <span class="stat-label">应收账款</span>
           <span class="stat-value amount gradient-text">¥{{ formatNumber(receivable) }}</span>
@@ -358,7 +358,7 @@ onMounted(loadData)
 }
 
 .tab.active {
-  background: var(--gradient-primary);
+  background: var(--accent-subtle); border: 1px solid var(--accent-border); color: var(--accent-primary);
   border-color: transparent;
   color: white;
 }
@@ -463,7 +463,7 @@ onMounted(loadData)
 
 .action-btn.primary {
   background: var(--gradient-subtle);
-  border-color: #8B5CF6;
+  border-color: #7C5CFC;
   color: var(--text-primary);
 }
 
@@ -608,7 +608,7 @@ onMounted(loadData)
 }
 
 .kimi-input:focus {
-  border-color: #8B5CF6;
+  border-color: #7C5CFC;
   outline: none;
 }
 
@@ -629,7 +629,7 @@ onMounted(loadData)
 }
 
 .payment-btn.active {
-  background: var(--gradient-primary);
+  background: var(--accent-subtle); border: 1px solid var(--accent-border); color: var(--accent-primary);
   border-color: transparent;
   color: white;
 }
@@ -655,13 +655,13 @@ onMounted(loadData)
 .btn-primary {
   flex: 1;
   height: 48px;
-  background: var(--gradient-primary);
+  background: var(--accent-primary);
   border: none;
   border-radius: var(--radius-md);
   color: white;
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  box-shadow: var(--shadow-glow-purple);
+  
 }
 </style>

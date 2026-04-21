@@ -256,8 +256,8 @@ onMounted(loadData)
 }
 
 .scan-area:hover {
-  border-color: #8B5CF6;
-  box-shadow: var(--shadow-glow-purple);
+  border-color: #7C5CFC;
+  
 }
 
 .scan-content {
@@ -516,7 +516,7 @@ onMounted(loadData)
 
 .payment-btn.active {
   background: var(--gradient-subtle);
-  border-color: #8B5CF6;
+  border-color: #7C5CFC;
   color: var(--text-primary);
 }
 
@@ -560,7 +560,7 @@ onMounted(loadData)
 .btn-submit {
   flex: 2;
   height: 52px;
-  background: var(--gradient-primary);
+  background: var(--accent-primary);
   border: none;
   border-radius: var(--radius-md);
   color: white;
@@ -568,12 +568,12 @@ onMounted(loadData)
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: var(--shadow-glow-purple);
+  
 }
 
 .btn-submit:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-glow-pink);
+  
 }
 
 .btn-submit:active {
@@ -616,7 +616,7 @@ onMounted(loadData)
 
 .quick-product-btn:hover {
   background: var(--bg-hover);
-  border-color: #8B5CF6;
+  border-color: #7C5CFC;
 }
 
 .qp-icon {
@@ -634,6 +634,6 @@ onMounted(loadData)
 .qp-price {
   font-size: 13px;
   font-weight: 600;
-  color: #8B5CF6;
+  color: #7C5CFC;
 }
 </style>
