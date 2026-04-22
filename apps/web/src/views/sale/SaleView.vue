@@ -22,13 +22,19 @@
         <span class="search-icon">🔍</span>
         <input v-model="searchQuery" class="kimi-input" placeholder="搜索单号、客户..." />
       </div>
+      <router-link to="/sale/return" class="btn-warning">
+        <span>🔄 退货</span>
+      </router-link>
       <router-link to="/sale/pos" class="btn-primary">
         <span>🛒 开单</span>
       </router-link>
     </div>
 
+    <!-- Loading -->
+    <div v-if="loading" class="loading-state">加载中...</div>
+
     <!-- Order List -->
-    <div class="order-list">
+    <div v-else class="order-list">
       <div v-for="order in filteredOrders" :key="order.id" class="order-card">
         <div class="order-header">
           <div class="order-info">
@@ -72,7 +78,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { orderApi } from '@/api'
+import { useToastStore } from '@/stores/toast'
 
+const toast = useToastStore()
 const searchQuery = ref('')
 const orders = ref<Array<{ id: number; no: string; type: string; typeName: string; customer: string; items: Array<{ name: string }>; totalQty: number; totalAmount: number; payment: string; date: string }>>([])
 const loading = ref(false)
@@ -94,7 +102,7 @@ async function loadData() {
       date: o.orderDate || o.createdAt?.slice(0, 10) || ''
     }))
   } catch (e: any) {
-    alert(e.message || '加载失败')
+    toast.error(e.message || '加载失败')
   } finally {
     loading.value = false
   }
@@ -117,11 +125,11 @@ function formatNumber(n: number) {
 }
 
 function printReceipt(order: any) {
-  alert(`打印 ${order.no} 小票（待实现）`)
+  toast.info(`打印 ${order.no} 小票（待实现）`)
 }
 
 function viewDetail(order: any) {
-  alert(`查看 ${order.no} 详情（待实现）`)
+  toast.info(`查看 ${order.no} 详情（待实现）`)
 }
 
 onMounted(loadData)
@@ -195,10 +203,10 @@ onMounted(loadData)
   outline: none;
 }
 
-.btn-primary {
+.btn-primary,
+.btn-warning {
   height: 44px;
   padding: 0 16px;
-  background: var(--accent-primary);
   border: none;
   border-radius: var(--radius-md);
   color: white;
@@ -210,7 +218,14 @@ onMounted(loadData)
   gap: 4px;
   white-space: nowrap;
   text-decoration: none;
-  
+}
+
+.btn-primary {
+  background: var(--accent-primary);
+}
+
+.btn-warning {
+  background: var(--color-warning);
 }
 
 .order-list {
@@ -321,7 +336,7 @@ onMounted(loadData)
 }
 
 .action-btn {
-  height: 32px;
+  height: 36px;
   padding: 0 14px;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
@@ -329,5 +344,13 @@ onMounted(loadData)
   color: var(--text-secondary);
   font-size: 13px;
   cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .action-btn {
+    min-height: 44px;
+    padding: 0 18px;
+    font-size: 14px;
+  }
 }
 </style>

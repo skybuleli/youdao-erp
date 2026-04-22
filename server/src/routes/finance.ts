@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { eq, desc, sql } from 'drizzle-orm'
+import { eq, desc, sql, inArray } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/d1'
 import { z } from 'zod'
 import * as schema from '../schema'
@@ -31,10 +31,10 @@ financeRouter.get('/transactions', async (c) => {
     .where(conditions)
     .orderBy(desc(schema.transactions.createdAt))
 
-  // 获取往来单位名称
-  const partnerIds = [...new Set(items.map(t => t.partnerId).filter(Boolean))]
+  // 获取往来单位名称（修复IN查询语法）
+  const partnerIds = [...new Set(items.map(t => t.partnerId).filter((id): id is number => id != null))]
   const partners = partnerIds.length > 0
-    ? await db.select().from(schema.partners).where(sql`${schema.partners.id} IN ${partnerIds}`)
+    ? await db.select().from(schema.partners).where(inArray(schema.partners.id, partnerIds))
     : []
   const partnerMap = new Map(partners.map(p => [p.id, p.name]))
 
@@ -55,13 +55,14 @@ financeRouter.get('/receivables', async (c) => {
     .where(sql`${schema.orders.type} = 'sale' AND ${schema.orders.status} != 'completed'`)
     .orderBy(desc(schema.orders.createdAt))
 
-  const partnerIds = [...new Set(orders.map(o => o.partnerId))]
+  const partnerIds = [...new Set(orders.map(o => o.partnerId).filter((id): id is number => id != null))]
   const partners = partnerIds.length > 0
-    ? await db.select().from(schema.partners).where(sql`${schema.partners.id} IN ${partnerIds}`)
+    ? await db.select().from(schema.partners).where(inArray(schema.partners.id, partnerIds))
     : []
   const partnerMap = new Map(partners.map(p => [p.id, p.name]))
 
   const result = orders.map(o => ({
+    orderId: o.id,
     partnerId: o.partnerId,
     partnerName: partnerMap.get(o.partnerId) || '',
     orderNo: o.orderNo,
@@ -81,13 +82,14 @@ financeRouter.get('/payables', async (c) => {
     .where(sql`${schema.orders.type} = 'purchase' AND ${schema.orders.status} != 'completed'`)
     .orderBy(desc(schema.orders.createdAt))
 
-  const partnerIds = [...new Set(orders.map(o => o.partnerId))]
+  const partnerIds = [...new Set(orders.map(o => o.partnerId).filter((id): id is number => id != null))]
   const partners = partnerIds.length > 0
-    ? await db.select().from(schema.partners).where(sql`${schema.partners.id} IN ${partnerIds}`)
+    ? await db.select().from(schema.partners).where(inArray(schema.partners.id, partnerIds))
     : []
   const partnerMap = new Map(partners.map(p => [p.id, p.name]))
 
   const result = orders.map(o => ({
+    orderId: o.id,
     partnerId: o.partnerId,
     partnerName: partnerMap.get(o.partnerId) || '',
     orderNo: o.orderNo,
@@ -99,7 +101,7 @@ financeRouter.get('/payables', async (c) => {
   return c.json({ data: result })
 })
 
-// POST /api/finance/transaction — 创建收付款记录
+// POST /api/finance/transaction — 创建收付款记录（事务保护）
 financeRouter.post('/transaction', async (c) => {
   const db = drizzle(c.env.DB, { schema })
   const body = await c.req.json()
@@ -121,40 +123,46 @@ financeRouter.post('/transaction', async (c) => {
 
   const data = result.data
 
-  // 如果关联了订单，更新订单的 paidAmount
-  if (data.orderId) {
-    const order = await db.select().from(schema.orders)
-      .where(eq(schema.orders.id, data.orderId))
-      .get()
-    if (order) {
-      const newPaid = (order.paidAmount ?? 0) + data.amount
-      await db.update(schema.orders)
-        .set({ paidAmount: newPaid })
-        .where(eq(schema.orders.id, data.orderId))
-
-      // 如果付清了，自动标记为 completed
-      if (newPaid >= (order.payableAmount ?? 0)) {
-        await db.update(schema.orders)
-          .set({ status: 'completed' })
+  try {
+    const record = await db.transaction(async (tx) => {
+      // 如果关联了订单，原子化更新订单的 paidAmount 和 status
+      if (data.orderId) {
+        const order = await tx.select().from(schema.orders)
           .where(eq(schema.orders.id, data.orderId))
+          .get()
+        if (order) {
+          const newPaid = (order.paidAmount ?? 0) + data.amount
+          const newStatus = newPaid >= (order.payableAmount ?? 0) ? 'completed' : order.status
+
+          await tx.update(schema.orders)
+            .set({
+              paidAmount: newPaid,
+              status: newStatus
+            })
+            .where(eq(schema.orders.id, data.orderId))
+        }
       }
-    }
+
+      // 更新往来单位余额
+      if (data.partnerId) {
+        const partner = await tx.select().from(schema.partners)
+          .where(eq(schema.partners.id, data.partnerId))
+          .get()
+        if (partner) {
+          const delta = data.type === 'income' ? -data.amount : data.amount
+          await tx.update(schema.partners)
+            .set({ balance: (partner.balance ?? 0) + delta })
+            .where(eq(schema.partners.id, data.partnerId))
+        }
+      }
+
+      const [inserted] = await tx.insert(schema.transactions).values(data).returning()
+      return inserted
+    })
+
+    return c.json({ data: record, message: '记录创建成功' }, 201)
+  } catch (err: any) {
+    console.error('Transaction creation failed:', err.message)
+    return c.json({ error: err.message || '记录创建失败' }, 500)
   }
-
-  // 更新往来单位余额
-  if (data.partnerId) {
-    const partner = await db.select().from(schema.partners)
-      .where(eq(schema.partners.id, data.partnerId))
-      .get()
-    if (partner) {
-      const delta = data.type === 'income' ? -data.amount : data.amount
-      await db.update(schema.partners)
-        .set({ balance: (partner.balance ?? 0) + delta })
-        .where(eq(schema.partners.id, data.partnerId))
-    }
-  }
-
-  const insertResult = await db.insert(schema.transactions).values(data).returning()
-
-  return c.json({ data: insertResult[0], message: '记录创建成功' }, 201)
 })

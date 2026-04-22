@@ -132,7 +132,10 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch, computed } from 'vue'
 import { productApi, partnerApi } from '@/api'
+import { useToastStore } from '@/stores/toast'
 import type { Product } from '@/api/product'
+
+const toast = useToastStore()
 
 const searchQuery = ref('')
 const selectedCategory = ref(0)
@@ -193,7 +196,7 @@ async function loadProducts() {
     })
     products.value = res.data
   } catch (err: any) {
-    alert(err.message || '加载失败')
+    toast.error(err.message || '加载失败')
   } finally {
     loading.value = false
   }
@@ -242,11 +245,11 @@ function editProduct(product: any) {
 
 async function saveProduct() {
   if (!form.name || !form.code) {
-    alert('请填写商品名称和条码')
+    toast.warning('请填写商品名称和条码')
     return
   }
   if (!form.supplierId) {
-    alert('请选择供应商')
+    toast.warning('请选择供应商')
     return
   }
   const payload = {
@@ -271,7 +274,7 @@ async function saveProduct() {
     Object.assign(form, { name: '', code: '', price: 0, cost: 0, spec: '', unit: '', categoryId: 5, supplierId: null, minStock: 10 })
     await loadProducts()
   } catch (err: any) {
-    alert(err.message || '保存失败')
+    toast.error(err.message || '保存失败')
   }
 }
 
@@ -281,7 +284,7 @@ async function deleteProduct(product: any) {
     await productApi.delete(product.id)
     await loadProducts()
   } catch (err: any) {
-    alert(err.message || '删除失败')
+    toast.error(err.message || '删除失败')
   }
 }
 </script>
@@ -342,9 +345,28 @@ async function deleteProduct(product: any) {
 }
 
 .loading-state {
-  text-align: center;
-  padding: 40px;
-  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 60px 20px;
+  color: var(--text-tertiary);
+  font-size: 14px;
+}
+
+.loading-state::before {
+  content: '';
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--border-subtle);
+  border-top-color: #7C5CFC;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .filter-tabs {

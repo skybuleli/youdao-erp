@@ -28,8 +28,11 @@
       </button>
     </div>
 
+    <!-- Loading -->
+    <div v-if="loading" class="loading-state">加载中...</div>
+
     <!-- Inventory List -->
-    <div class="inventory-list">
+    <div v-else class="inventory-list">
       <div v-for="item in filteredItems" :key="item.id" class="inventory-card" :class="stockClass(item)">
         <div class="item-header">
           <div class="item-icon">{{ item.icon }}</div>
@@ -129,7 +132,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { productApi, partnerApi, inventoryApi } from '@/api'
+import { useToastStore } from '@/stores/toast'
 
+const toast = useToastStore()
 const searchQuery = ref('')
 const activeTab = ref('all')
 const selectedSupplier = ref<number | null>(null)
@@ -177,7 +182,7 @@ async function loadData() {
       icon: '📦'
     }))
   } catch (e: any) {
-    alert(e.message || '加载失败')
+    toast.error(e.message || '加载失败')
   } finally {
     loading.value = false
   }
@@ -222,7 +227,7 @@ function adjustStock(item: any) {
 async function confirmAdjust() {
   if (!adjustItem.value) return
   if (adjustQty.value === 0) {
-    alert('调整数量不能为 0')
+    toast.warning('调整数量不能为 0')
     return
   }
   try {
@@ -234,15 +239,15 @@ async function confirmAdjust() {
       remark: adjustRemark.value || undefined
     })
     showAdjustModal.value = false
-    alert('库存调整成功！')
+    toast.success('库存调整成功！')
     await loadData()
   } catch (err: any) {
-    alert(err.message || '库存调整失败')
+    toast.error(err.message || '库存调整失败')
   }
 }
 
 function viewHistory(item: any) {
-  alert(`查看 ${item.name} 的出入库记录（待实现）`)
+  toast.info(`查看 ${item.name} 的出入库记录（待实现）`)
 }
 
 watch(selectedSupplier, loadData)

@@ -1,11 +1,13 @@
 <template>
   <div id="app" :data-theme="themeStore.currentTheme">
     <router-view />
+    <ToastContainer />
   </div>
 </template>
 
 <script setup lang="ts">
 import { useThemeStore } from './stores/theme'
+import ToastContainer from './components/ToastContainer.vue'
 
 const themeStore = useThemeStore()
 </script>

@@ -1,5 +1,8 @@
 <template>
   <div class="main-layout">
+    <!-- Global Loading Bar -->
+    <div class="loading-bar" :class="{ active: loadingStore.globalLoading }"></div>
+
     <!-- Mobile Header -->
     <header class="mobile-header glass no-print">
       <button class="menu-btn" @click="sidebarOpen = !sidebarOpen">
@@ -80,11 +83,13 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '@/stores/theme'
 import { useAuthStore } from '@/stores/auth'
+import { useLoadingStore } from '@/stores/loading'
 
 const route = useRoute()
 const router = useRouter()
 const themeStore = useThemeStore()
 const authStore = useAuthStore()
+const loadingStore = useLoadingStore()
 
 const sidebarOpen = ref(false)
 
@@ -143,6 +148,31 @@ function logout() {
   display: flex;
   min-height: 100vh;
   background: var(--bg-base);
+}
+
+/* Global Loading Bar */
+.loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #7C5CFC, transparent);
+  background-size: 200% 100%;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.loading-bar.active {
+  opacity: 1;
+  animation: loading-slide 1s linear infinite;
+}
+
+@keyframes loading-slide {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* Mobile Header */

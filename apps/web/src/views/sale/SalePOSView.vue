@@ -67,11 +67,9 @@
       </div>
 
       <div class="customer-row">
-        <select class="kimi-select">
-          <option>选择客户</option>
-          <option>张老板</option>
-          <option>李老板</option>
-          <option>客户C</option>
+        <select v-model="selectedCustomer" class="kimi-select">
+          <option :value="null">选择客户</option>
+          <option v-for="p in customers" :key="p.id" :value="p.id">{{ p.name }}</option>
         </select>
         <select class="kimi-select">
           <option>总仓</option>
@@ -131,8 +129,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { productApi, orderApi } from '@/api'
+import { productApi, orderApi, partnerApi } from '@/api'
+import { useToastStore } from '@/stores/toast'
 
+const toast = useToastStore()
 const isScanning = ref(false)
 const cart = ref<Array<{ id: number; name: string; price: number; qty: number; unit: string; icon: string }>>([])
 const discount = ref(0)
@@ -140,6 +140,8 @@ const selectedPayment = ref('cash')
 const received = ref(0)
 const loading = ref(false)
 const quickProducts = ref<Array<any>>([])
+const customers = ref<Array<{ id: number; name: string }>>([])
+const selectedCustomer = ref<number | null>(null)
 
 const paymentMethods = [
   { value: 'cash', label: '现金', icon: '💵' },
@@ -150,16 +152,20 @@ const paymentMethods = [
 async function loadData() {
   loading.value = true
   try {
-    const res = await productApi.list()
-    quickProducts.value = res.data.slice(0, 12).map((p: any) => ({
+    const [prodRes, partnerRes] = await Promise.all([
+      productApi.list().catch(() => ({ data: [], total: 0, page: 1, pageSize: 10 })),
+      partnerApi.list().catch(() => ({ data: [] }))
+    ])
+    quickProducts.value = (prodRes.data || []).slice(0, 12).map((p: any) => ({
       id: p.id,
       name: p.name,
       price: p.salePrice,
       supplierName: p.supplierName,
       icon: '📦'
     }))
+    customers.value = (partnerRes.data || []).map((p: any) => ({ id: p.id, name: p.name }))
   } catch (e: any) {
-    alert(e.message || '加载失败')
+    toast.error(e.message || '加载失败')
   } finally {
     loading.value = false
   }
@@ -170,11 +176,7 @@ const totalAmount = computed(() => cart.value.reduce((sum, item) => sum + item.p
 const payableAmount = computed(() => Math.max(0, totalAmount.value - discount.value))
 
 function handleScan() {
-  isScanning.value = true
-  setTimeout(() => {
-    addToCart({ id: Date.now(), name: '扫码商品' + Math.floor(Math.random() * 100), price: Math.floor(Math.random() * 50) + 10, qty: 1, unit: '件', icon: '📦' })
-    isScanning.value = false
-  }, 1500)
+  toast.info('扫码功能待接入条码扫描设备')
 }
 
 function addToCart(product: { id: number; name: string; price: number; qty?: number; unit?: string; icon?: string }) {
@@ -212,14 +214,18 @@ function clearCart() {
 }
 
 async function submitOrder() {
+  if (!selectedCustomer.value) {
+    toast.warning('请选择客户')
+    return
+  }
   if (cart.value.length === 0) {
-    alert('请先添加商品')
+    toast.warning('请先添加商品')
     return
   }
   try {
     await orderApi.create({
       type: 'sale',
-      partnerId: 1,
+      partnerId: selectedCustomer.value,
       paymentMethod: selectedPayment.value,
       discountAmount: discount.value,
       paidAmount: received.value || payableAmount.value,
@@ -229,10 +235,11 @@ async function submitOrder() {
         unitPrice: item.price
       }))
     })
-    alert('订单提交成功！')
+    toast.success('订单提交成功！')
     clearCart()
+    selectedCustomer.value = null
   } catch (e: any) {
-    alert(e.message || '提交失败')
+    toast.error(e.message || '提交失败')
   }
 }
 
@@ -378,8 +385,8 @@ onMounted(loadData)
 }
 
 .qty-btn {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: 1px solid var(--border-medium);
   background: var(--bg-elevated);
@@ -389,6 +396,13 @@ onMounted(loadData)
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+@media (max-width: 640px) {
+  .qty-btn {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 .qty-value {

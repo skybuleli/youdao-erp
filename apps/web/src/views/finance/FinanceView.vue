@@ -38,8 +38,12 @@
       </button>
     </div>
 
+    <!-- Loading -->
+    <div v-if="loading" class="loading-state">加载中...</div>
+
     <!-- Receivable List -->
-    <div v-if="activeTab === 'receivable'" class="bill-list">
+    <div v-if="!loading && activeTab === 'receivable'" class="bill-list">
+      <div v-if="receivableBills.length === 0" class="empty-state">暂无应收账款</div>
       <div v-for="bill in receivableBills" :key="bill.id" class="bill-card">
         <div class="bill-header">
           <div class="bill-partner">
@@ -66,7 +70,8 @@
     </div>
 
     <!-- Payable List -->
-    <div v-if="activeTab === 'payable'" class="bill-list">
+    <div v-if="!loading && activeTab === 'payable'" class="bill-list">
+      <div v-if="payableBills.length === 0" class="empty-state">暂无应付账款</div>
       <div v-for="bill in payableBills" :key="bill.id" class="bill-card">
         <div class="bill-header">
           <div class="bill-partner">
@@ -92,8 +97,9 @@
     </div>
 
     <!-- Cash Flow -->
-    <div v-if="activeTab === 'cashflow'" class="cashflow-section">
-      <div class="flow-card income">
+    <div v-if="!loading && activeTab === 'cashflow'" class="cashflow-section">
+      <div v-if="incomeItems.length === 0 && expenseItems.length === 0" class="empty-state">暂无本月收支记录</div>
+      <div v-if="incomeItems.length > 0" class="flow-card income">
         <div class="flow-header">
           <span class="flow-icon">📈</span>
           <span class="flow-title">本月收入</span>
@@ -106,7 +112,7 @@
           </div>
         </div>
       </div>
-      <div class="flow-card expense">
+      <div v-if="expenseItems.length > 0" class="flow-card expense">
         <div class="flow-header">
           <span class="flow-icon">📉</span>
           <span class="flow-title">本月支出</span>
@@ -168,7 +174,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { financeApi } from '@/api'
+import { useToastStore } from '@/stores/toast'
 
+const toast = useToastStore()
 const activeTab = ref('receivable')
 const showReceiveModal = ref(false)
 const currentBill = ref<any>(null)
@@ -183,35 +191,17 @@ const tabs = [
   { value: 'cashflow', label: '收支' }
 ]
 
-const receivable = ref(8500)
-const payable = ref(5600)
-const monthIncome = ref(12800)
-const monthExpense = ref(8900)
+const receivable = ref(0)
+const payable = ref(0)
+const monthIncome = ref(0)
+const monthExpense = ref(0)
 const monthNet = computed(() => monthIncome.value - monthExpense.value)
 
-const receivableBills = ref([
-  { id: 1, partner: '张老板', orderNo: 'XS20250422001', amount: 2450, dueDate: '2025-05-22', overdue: 0 },
-  { id: 2, partner: '客户C', orderNo: 'XS20250420003', amount: 880, dueDate: '2025-05-20', overdue: 0 },
-  { id: 3, partner: '张老板', orderNo: 'XS20250415002', amount: 3200, dueDate: '2025-05-15', overdue: 7 },
-  { id: 4, partner: '李老板', orderNo: 'XS20250410001', amount: 1970, dueDate: '2025-05-10', overdue: 12 }
-])
+const receivableBills = ref<any[]>([])
+const payableBills = ref<any[]>([])
 
-const payableBills = ref([
-  { id: 1, partner: '供应商A', orderNo: 'CG20250422001', amount: 3250, dueDate: '2025-05-22' },
-  { id: 2, partner: '供应商B', orderNo: 'CG20250421002', amount: 2350, dueDate: '2025-05-21' }
-])
-
-const incomeItems = ref([
-  { name: '销售收入', amount: 11200 },
-  { name: '其他收入', amount: 1600 }
-])
-
-const expenseItems = ref([
-  { name: '采购支出', amount: 6500 },
-  { name: '运费', amount: 800 },
-  { name: '房租', amount: 1200 },
-  { name: '其他', amount: 400 }
-])
+const incomeItems = ref<{ name: string; amount: number }[]>([])
+const expenseItems = ref<{ name: string; amount: number }[]>([])
 
 const paymentMethods = [
   { value: 'cash', label: '现金', icon: '💵' },
@@ -223,34 +213,62 @@ const paymentMethods = [
 async function loadData() {
   loading.value = true
   try {
-    const [recRes, payRes] = await Promise.all([
-      financeApi.receivables(),
-      financeApi.payables()
+    // 计算本月日期范围
+    const now = new Date()
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().slice(0, 10)
+
+    const [recRes, payRes, transRes] = await Promise.all([
+      financeApi.receivables().catch(() => ({ data: [] })),
+      financeApi.payables().catch(() => ({ data: [] })),
+      financeApi.transactions({ startDate: startOfMonth, endDate: endOfMonth }).catch(() => ({ data: [] }))
     ])
-    if (recRes.data && recRes.data.length > 0) {
-      receivableBills.value = recRes.data.map((r: any) => ({
-        id: r.partnerId,
-        partner: r.partnerName,
-        orderNo: r.orderNo,
-        amount: r.amount,
-        dueDate: r.dueDate,
-        overdue: r.overdue
-      }))
-      receivable.value = receivableBills.value.reduce((sum, b) => sum + b.amount, 0)
+
+    receivableBills.value = (recRes.data || []).map((r: any) => ({
+      orderId: r.orderId,
+      id: r.orderId,
+      partnerId: r.partnerId,
+      partner: r.partnerName,
+      orderNo: r.orderNo,
+      amount: r.amount,
+      dueDate: r.dueDate,
+      overdue: r.overdue || 0
+    }))
+    receivable.value = receivableBills.value.reduce((sum, b) => sum + b.amount, 0)
+
+    payableBills.value = (payRes.data || []).map((r: any) => ({
+      orderId: r.orderId,
+      id: r.orderId,
+      partnerId: r.partnerId,
+      partner: r.partnerName,
+      orderNo: r.orderNo,
+      amount: r.amount,
+      dueDate: r.dueDate,
+      overdue: r.overdue || 0
+    }))
+    payable.value = payableBills.value.reduce((sum, b) => sum + b.amount, 0)
+
+    // 收支明细
+    const transactions = transRes.data || []
+    const incomeTrans = transactions.filter((t: any) => t.type === 'income')
+    const expenseTrans = transactions.filter((t: any) => t.type === 'expense')
+
+    monthIncome.value = incomeTrans.reduce((sum: number, t: any) => sum + (t.amount || 0), 0)
+    monthExpense.value = expenseTrans.reduce((sum: number, t: any) => sum + (t.amount || 0), 0)
+
+    // 按 category 分组
+    const incomeMap = new Map<string, number>()
+    const expenseMap = new Map<string, number>()
+    for (const t of incomeTrans) {
+      incomeMap.set(t.category, (incomeMap.get(t.category) || 0) + (t.amount || 0))
     }
-    if (payRes.data && payRes.data.length > 0) {
-      payableBills.value = payRes.data.map((r: any) => ({
-        id: r.partnerId,
-        partner: r.partnerName,
-        orderNo: r.orderNo,
-        amount: r.amount,
-        dueDate: r.dueDate,
-        overdue: r.overdue || 0
-      }))
-      payable.value = payableBills.value.reduce((sum, b) => sum + b.amount, 0)
+    for (const t of expenseTrans) {
+      expenseMap.set(t.category, (expenseMap.get(t.category) || 0) + (t.amount || 0))
     }
-  } catch {
-    console.log('Finance API not ready, using mock data')
+    incomeItems.value = Array.from(incomeMap.entries()).map(([name, amount]) => ({ name, amount }))
+    expenseItems.value = Array.from(expenseMap.entries()).map(([name, amount]) => ({ name, amount }))
+  } catch (err: any) {
+    console.error('Finance load failed:', err.message)
   } finally {
     loading.value = false
   }
@@ -268,23 +286,49 @@ function receivePayment(bill: any) {
   showReceiveModal.value = true
 }
 
-function confirmReceive() {
-  if (currentBill.value && receiveAmount.value > 0) {
-    currentBill.value.amount -= receiveAmount.value
-    if (currentBill.value.amount <= 0) {
-      receivableBills.value = receivableBills.value.filter(b => b.id !== currentBill.value.id)
-    }
+async function confirmReceive() {
+  if (!currentBill.value || receiveAmount.value <= 0) return
+  try {
+    await financeApi.createTransaction({
+      type: 'income',
+      category: '销售收入',
+      amount: receiveAmount.value,
+      partnerId: currentBill.value.partnerId,
+      orderId: currentBill.value.orderId,
+      account: selectedPayment.value,
+      remark: receiveRemark.value || '收款'
+    })
+    // 刷新数据
+    await loadData()
     showReceiveModal.value = false
-    alert('收款成功！')
+    toast.success('收款成功！')
+  } catch (err: any) {
+    toast.error('收款失败: ' + (err.message || '未知错误'))
   }
 }
 
-function makePayment(bill: any) {
-  alert(`付款给 ${bill.partner}（待实现）`)
+async function makePayment(bill: any) {
+  const amount = prompt(`付款给 ${bill.partner}，应付金额: ¥${bill.amount}，请输入实付金额:`, String(bill.amount))
+  if (!amount || Number(amount) <= 0) return
+  try {
+    await financeApi.createTransaction({
+      type: 'expense',
+      category: '采购支出',
+      amount: Number(amount),
+      partnerId: bill.partnerId,
+      orderId: bill.orderId,
+      account: 'bank',
+      remark: '付款'
+    })
+    await loadData()
+    toast.success('付款成功！')
+  } catch (err: any) {
+    toast.error('付款失败: ' + (err.message || '未知错误'))
+  }
 }
 
 function viewDetail(bill: any) {
-  alert(`查看 ${bill.orderNo} 详情（待实现）`)
+  toast.info(`查看 ${bill.orderNo} 详情（待实现）`)
 }
 
 onMounted(loadData)
@@ -662,6 +706,15 @@ onMounted(loadData)
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-tertiary);
+  font-size: 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
 }
 </style>

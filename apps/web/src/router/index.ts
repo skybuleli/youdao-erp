@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useLoadingStore } from '@/stores/loading'
 
 const routes = [
   {
@@ -19,6 +20,7 @@ const routes = [
       { path: 'purchase/new', name: 'PurchaseOrder', component: () => import('@/views/purchase/PurchaseOrderView.vue') },
       { path: 'sale', name: 'Sale', component: () => import('@/views/sale/SaleView.vue') },
       { path: 'sale/pos', name: 'SalePOS', component: () => import('@/views/sale/SalePOSView.vue') },
+      { path: 'sale/return', name: 'SaleReturn', component: () => import('@/views/sale/SaleReturnView.vue') },
       { path: 'inventory', name: 'Inventory', component: () => import('@/views/inventory/InventoryView.vue') },
       { path: 'finance', name: 'Finance', component: () => import('@/views/finance/FinanceView.vue') },
       { path: 'report', name: 'Report', component: () => import('@/views/report/ReportView.vue') },
@@ -36,12 +38,19 @@ const router = createRouter({
 })
 
 router.beforeEach((to, _from, next) => {
+  const loadingStore = useLoadingStore()
+  loadingStore.start()
   const token = localStorage.getItem('token')
   if (!to.meta.public && !token) {
     next('/login')
   } else {
     next()
   }
+})
+
+router.afterEach(() => {
+  const loadingStore = useLoadingStore()
+  setTimeout(() => loadingStore.stop(), 300)
 })
 
 export default router

@@ -146,8 +146,10 @@
 import { ref, computed, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { productApi, orderApi, partnerApi } from '@/api'
+import { useToastStore } from '@/stores/toast'
 
 const router = useRouter()
+const toast = useToastStore()
 const showProductPicker = ref(false)
 const pickerQuery = ref('')
 const loading = ref(false)
@@ -182,7 +184,7 @@ async function loadData() {
     }))
     suppliers.value = partnerRes.data
   } catch (e: any) {
-    alert(e.message || '加载失败')
+    toast.error(e.message || '加载失败')
   } finally {
     loading.value = false
   }
@@ -247,11 +249,11 @@ function removeItem(index: number) {
 
 async function submitOrder() {
   if (!form.supplierId) {
-    alert('请选择供应商')
+    toast.warning('请选择供应商')
     return
   }
   if (items.value.length === 0) {
-    alert('请添加采购商品')
+    toast.warning('请添加采购商品')
     return
   }
   try {
@@ -266,10 +268,10 @@ async function submitOrder() {
         unitPrice: i.price
       }))
     })
-    alert('采购单提交成功！')
+    toast.success('采购单提交成功！')
     router.push('/purchase')
   } catch (e: any) {
-    alert(e.message || '提交失败')
+    toast.error(e.message || '提交失败')
   }
 }
 
@@ -469,8 +471,8 @@ onMounted(loadData)
 }
 
 .qty-btn {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 1px solid var(--border-medium);
   background: var(--bg-elevated);
@@ -480,6 +482,14 @@ onMounted(loadData)
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+@media (max-width: 640px) {
+  .qty-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
 }
 
 .qty-input {

@@ -183,8 +183,10 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useToastStore } from '@/stores/toast'
 
 const router = useRouter()
+const toast = useToastStore()
 const authStore = useAuthStore()
 
 const settings = reactive({
@@ -214,21 +216,21 @@ function toggleTheme() {
 }
 
 function editProfile() {
-  alert('编辑个人信息（待实现）')
+  toast.info('编辑个人信息（待实现）')
 }
 
 function saveShop() {
   showShopModal.value = false
-  alert('店铺信息保存成功！')
+  toast.success('店铺信息保存成功！')
 }
 
 function savePassword() {
   if (pwdForm.new !== pwdForm.confirm) {
-    alert('两次输入的新密码不一致')
+    toast.warning('两次输入的新密码不一致')
     return
   }
   showPasswordModal.value = false
-  alert('密码修改成功！')
+  toast.success('密码修改成功！')
   Object.assign(pwdForm, { old: '', new: '', confirm: '' })
 }
 

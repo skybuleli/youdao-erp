@@ -13,6 +13,10 @@
       </button>
     </div>
 
+    <!-- Loading -->
+    <div v-if="loading" class="loading-state">加载中...</div>
+
+    <template v-else>
     <!-- Summary Cards -->
     <div class="stats-grid">
       <div class="stat-card">
@@ -51,7 +55,7 @@
         <h3>📈 销售趋势</h3>
         <span class="chart-subtitle">{{ dateRangeLabel }}</span>
       </div>
-      <div class="mock-chart">
+      <div v-if="trendData.length > 0" class="mock-chart">
         <div v-for="(bar, i) in trendData" :key="i" class="bar-group">
           <div class="bar-stack">
             <div class="bar-income" :style="{ height: bar.income + '%' }"></div>
@@ -60,6 +64,7 @@
           <span class="bar-label">{{ bar.label }}</span>
         </div>
       </div>
+      <div v-else class="empty-state">暂无销售趋势数据</div>
     </div>
 
     <!-- Top Products -->
@@ -73,11 +78,12 @@
           <div class="rank-info">
             <span class="rank-name">{{ item.name }}</span>
             <div class="rank-bar">
-              <div class="rank-fill" :style="{ width: (item.amount / topProducts[0].amount * 100) + '%' }"></div>
+              <div class="rank-fill" :style="{ width: (item.amount / (topProducts[0]?.amount || 1) * 100) + '%' }"></div>
             </div>
           </div>
           <span class="rank-amount amount">¥{{ formatNumber(item.amount) }}</span>
         </div>
+        <div v-if="topProducts.length === 0" class="empty-state">暂无商品排行数据</div>
       </div>
     </div>
 
@@ -97,6 +103,7 @@
           </div>
           <span class="category-percent">{{ cat.percent }}%</span>
         </div>
+        <div v-if="categoryData.length === 0" class="empty-state">暂无分类数据</div>
       </div>
     </div>
 
@@ -114,6 +121,7 @@
           <span class="partner-amount amount">¥{{ formatNumber(p.amount) }}</span>
           <span class="partner-count">{{ p.orders }}单</span>
         </div>
+        <div v-if="partnerRanking.length === 0" class="empty-state">暂无客户排行数据</div>
       </div>
     </div>
 
@@ -134,12 +142,13 @@
         </div>
       </div>
     </div>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { reportApi } from '@/api'
+import { ref, computed, onMounted, watch } from 'vue'
+import { reportApi, productApi } from '@/api'
 
 const dateRange = ref('week')
 const loading = ref(false)
@@ -162,95 +171,99 @@ const dateRangeLabel = computed(() => {
 })
 
 const report = ref({
-  sales: 32400,
-  purchases: 21800,
-  profit: 10600,
-  margin: 32.7
+  sales: 0,
+  purchases: 0,
+  profit: 0,
+  margin: 0
 })
 
-const trendData = ref([
-  { label: '周一', income: 60, expense: 40 },
-  { label: '周二', income: 75, expense: 50 },
-  { label: '周三', income: 45, expense: 35 },
-  { label: '周四', income: 85, expense: 55 },
-  { label: '周五', income: 70, expense: 45 },
-  { label: '周六', income: 90, expense: 60 },
-  { label: '周日', income: 65, expense: 40 }
-])
-
-const topProducts = ref([
-  { name: '伊利纯牛奶 250ml*24', amount: 4500 },
-  { name: '可口可乐 330ml*6', amount: 3200 },
-  { name: '五常大米 5kg', amount: 2800 },
-  { name: '海飞丝洗发水 400ml', amount: 2100 },
-  { name: '农夫山泉 550ml*24', amount: 1800 },
-  { name: '奥利奥夹心饼干 116g', amount: 1500 },
-  { name: '乐事薯片 70g', amount: 1200 },
-  { name: '康师傅红烧牛肉面', amount: 800 }
-])
-
-const categoryData = ref([
-  { name: '饮料', percent: 35, color: '#7C5CFC' },
-  { name: '零食', percent: 25, color: '#5B8DEF' },
-  { name: '粮油', percent: 20, color: '#3B82F6' },
-  { name: '日用', percent: 15, color: '#10B981' },
-  { name: '其他', percent: 5, color: '#F59E0B' }
-])
-
-const partnerRanking = ref([
-  { name: '张老板', amount: 8500, orders: 12 },
-  { name: '客户C', amount: 6200, orders: 8 },
-  { name: '李老板', amount: 4800, orders: 6 },
-  { name: '王老板', amount: 3200, orders: 4 },
-  { name: '赵老板', amount: 2100, orders: 3 }
-])
-
+const trendData = ref<{ label: string; income: number; expense: number }[]>([])
+const topProducts = ref<{ name: string; amount: number }[]>([])
+const categoryData = ref<{ name: string; percent: number; color: string }[]>([])
+const partnerRanking = ref<{ name: string; amount: number; orders: number }[]>([])
 const supplierInventory = ref<Array<{ supplier: string; sku: number; value: number }>>([])
+
+const categoryNameMap = ref<Map<string, string>>(new Map())
+
+async function loadCategoryMap() {
+  try {
+    const res = await productApi.list({ pageSize: 1000 })
+    const map = new Map<string, string>()
+    for (const p of res.data || []) {
+      if (p.categoryId && !map.has(String(p.categoryId))) {
+        map.set(String(p.categoryId), p.name.split(' ')[0] || `分类${p.categoryId}`)
+      }
+    }
+    categoryNameMap.value = map
+  } catch {
+    // ignore
+  }
+}
 
 async function loadData() {
   loading.value = true
   try {
-    const [, profitRes, salesRes, inventoryRes] = await Promise.all([
-      reportApi.dashboard().catch(() => ({ data: null })),
+    const [profitRes, salesRes, inventoryRes] = await Promise.all([
       reportApi.profit().catch(() => ({ data: null })),
       reportApi.sales(dateRange.value).catch(() => ({ data: null })),
       reportApi.inventory().catch(() => ({ data: null }))
     ])
-    if (profitRes.data && profitRes.data.totalSales > 0) {
-      report.value.sales = profitRes.data.totalSales
-      report.value.purchases = profitRes.data.totalCost
-      report.value.profit = profitRes.data.grossProfit
-      report.value.margin = Math.round(profitRes.data.margin * 10) / 10
+
+    if (profitRes.data) {
+      report.value.sales = profitRes.data.totalSales || 0
+      report.value.purchases = profitRes.data.totalCost || 0
+      report.value.profit = profitRes.data.grossProfit || 0
+      report.value.margin = profitRes.data.margin ? Math.round(profitRes.data.margin * 10) / 10 : 0
     }
-    if (profitRes.data && profitRes.data.byCategory && profitRes.data.byCategory.length > 0) {
+
+    if (profitRes.data?.byCategory && profitRes.data.byCategory.length > 0) {
+      const total = profitRes.data.totalSales || 1
       categoryData.value = profitRes.data.byCategory.map((c: any, i: number) => ({
-        name: c.category,
-        percent: Math.round(c.sales / profitRes.data.totalSales * 100),
+        name: categoryNameMap.value.get(String(c.category)) || c.category || '未分类',
+        percent: Math.round((c.sales || 0) / total * 100),
         color: ['#7C5CFC', '#5B8DEF', '#3B82F6', '#10B981', '#F59E0B'][i % 5]
       }))
+    } else {
+      categoryData.value = []
     }
+
     if (salesRes.data && salesRes.data.length > 0) {
-      trendData.value = salesRes.data.slice(-7).map((s: any, i: number) => ({
-        label: s.date?.slice(5) || ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][i],
-        income: Math.min(100, Math.max(5, s.sales / 100)),
-        expense: Math.min(100, Math.max(5, s.sales / 200))
+      const maxSales = Math.max(...salesRes.data.map((s: any) => s.sales || 0), 1)
+      trendData.value = salesRes.data.slice(-7).map((s: any) => ({
+        label: s.date?.slice(5) || '',
+        income: Math.max(5, Math.round(((s.sales || 0) / maxSales) * 100)),
+        expense: Math.max(5, Math.round(((s.sales || 0) / maxSales) * 50))
       }))
+    } else {
+      trendData.value = []
     }
-    if (inventoryRes.data && inventoryRes.data.bySupplier) {
+
+    if (inventoryRes.data?.bySupplier) {
       supplierInventory.value = inventoryRes.data.bySupplier
+    } else {
+      supplierInventory.value = []
     }
-  } catch {
-    console.log('Report API not ready, using mock data')
+
+    // TOP 商品和客户排行暂无 API，保持为空
+    topProducts.value = []
+    partnerRanking.value = []
+  } catch (err: any) {
+    console.error('Report load failed:', err.message)
   } finally {
     loading.value = false
   }
 }
 
+watch(dateRange, () => loadData())
+
 function formatNumber(n: number) {
   return n.toLocaleString('zh-CN')
 }
 
-onMounted(loadData)
+onMounted(async () => {
+  await loadCategoryMap()
+  await loadData()
+})
 </script>
 
 <style scoped>
@@ -621,5 +634,12 @@ onMounted(loadData)
   font-weight: 600;
   min-width: 80px;
   text-align: right;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-tertiary);
+  font-size: 14px;
 }
 </style>

@@ -19,8 +19,11 @@
       <input v-model="searchQuery" class="kimi-input" placeholder="搜索名称、联系人、电话..." />
     </div>
 
+    <!-- Loading -->
+    <div v-if="loading" class="loading-state">加载中...</div>
+
     <!-- Partner List -->
-    <div class="partner-list">
+    <div v-else class="partner-list">
       <div v-for="partner in filteredPartners" :key="partner.id" class="partner-card">
         <div class="partner-header">
           <div class="partner-avatar">{{ partner.name.charAt(0) }}</div>
@@ -144,7 +147,9 @@
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { partnerApi, productApi } from '@/api'
+import { useToastStore } from '@/stores/toast'
 
+const toast = useToastStore()
 const activeTab = ref('all')
 const searchQuery = ref('')
 const showAddModal = ref(false)
@@ -171,7 +176,7 @@ async function loadData() {
       typeName: p.type === 'customer' ? '客户' : '供应商'
     }))
   } catch (e: any) {
-    alert(e.message || '加载失败')
+    toast.error(e.message || '加载失败')
   } finally {
     loading.value = false
   }
@@ -224,9 +229,9 @@ async function deletePartner(partner: any) {
   try {
     await partnerApi.delete(partner.id)
     await loadData()
-    alert('删除成功')
+    toast.success('删除成功')
   } catch (e: any) {
-    alert(e.message || '删除失败')
+    toast.error(e.message || '删除失败')
   }
 }
 
@@ -239,7 +244,7 @@ async function openDetail(partner: any) {
       const res = await productApi.list({ supplier: String(partner.id) })
       detailProducts.value = res.data
     } catch (e: any) {
-      alert(e.message || '加载商品失败')
+      toast.error(e.message || '加载商品失败')
     }
   }
 }
@@ -250,7 +255,7 @@ function callPartner(phone: string) {
 
 async function savePartner() {
   if (!form.name) {
-    alert('请输入单位名称')
+    toast.warning('请输入单位名称')
     return
   }
   try {
@@ -275,9 +280,9 @@ async function savePartner() {
     editingPartner.value = null
     Object.assign(form, { type: 'customer', name: '', contact: '', phone: '', address: '' })
     await loadData()
-    alert('保存成功')
+    toast.success('保存成功')
   } catch (e: any) {
-    alert(e.message || '保存失败')
+    toast.error(e.message || '保存失败')
   }
 }
 

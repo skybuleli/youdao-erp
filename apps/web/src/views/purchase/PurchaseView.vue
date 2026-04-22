@@ -27,8 +27,11 @@
       </router-link>
     </div>
 
+    <!-- Loading -->
+    <div v-if="loading" class="loading-state">加载中...</div>
+
     <!-- Order List -->
-    <div class="order-list">
+    <div v-else class="order-list">
       <div v-for="order in filteredOrders" :key="order.id" class="order-card">
         <div class="order-header">
           <div class="order-no">{{ order.no }}</div>
@@ -71,7 +74,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { orderApi, partnerApi } from '@/api'
+import { useToastStore } from '@/stores/toast'
 
+const toast = useToastStore()
 const statusFilter = ref('all')
 const orders = ref<Array<{ id: number; no: string; status: string; supplier: string; items: Array<{ name: string }>; totalQty: number; totalAmount: number; date: string }>>([])
 const partnerMap = ref<Map<number, string>>(new Map())
@@ -104,7 +109,7 @@ async function loadData() {
       date: o.orderDate || o.createdAt?.slice(0, 10) || ''
     }))
   } catch (e: any) {
-    alert(e.message || '加载失败')
+    toast.error(e.message || '加载失败')
   } finally {
     loading.value = false
   }
@@ -130,12 +135,19 @@ function formatNumber(n: number) {
   return n.toLocaleString('zh-CN')
 }
 
-function receiveOrder(order: any) {
-  alert(`入库 ${order.no}（待实现）`)
+async function receiveOrder(order: any) {
+  if (!confirm(`确认入库 ${order.no}？\n入库后将增加对应商品库存。`)) return
+  try {
+    await orderApi.updateStatus(order.id, 'completed')
+    toast.success('入库成功！')
+    await loadData()
+  } catch (e: any) {
+    toast.error(e.message || '入库失败')
+  }
 }
 
 function viewDetail(order: any) {
-  alert(`查看 ${order.no} 详情（待实现）`)
+  toast.info(`查看 ${order.no} 详情（待实现）`)
 }
 
 watch(statusFilter, loadData)
@@ -320,7 +332,7 @@ onMounted(async () => {
 }
 
 .action-btn {
-  height: 32px;
+  height: 36px;
   padding: 0 14px;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
@@ -328,6 +340,14 @@ onMounted(async () => {
   color: var(--text-secondary);
   font-size: 13px;
   cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .action-btn {
+    min-height: 44px;
+    padding: 0 18px;
+    font-size: 14px;
+  }
 }
 
 .action-btn.primary {

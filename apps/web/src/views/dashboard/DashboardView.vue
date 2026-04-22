@@ -35,14 +35,16 @@
           <h3>📈 近7天销售趋势</h3>
         </div>
         <div class="chart-placeholder">
-          <div class="mock-chart">
-            <div v-for="(bar, i) in mockChartData" :key="i" class="bar" :style="{ height: bar + '%' }">
+          <div v-if="salesTrend.length > 0" class="mock-chart">
+            <div v-for="(bar, i) in salesTrend" :key="i" class="bar" :style="{ height: bar.height + '%' }">
               <div class="bar-fill"></div>
+              <div class="bar-tooltip">¥{{ formatNumber(bar.sales) }}</div>
             </div>
           </div>
-          <div class="mock-labels">
-            <span v-for="(day, i) in ['周一', '周二', '周三', '周四', '周五', '周六', '周日']" :key="i">{{ day }}</span>
+          <div v-if="salesTrend.length > 0" class="mock-labels">
+            <span v-for="(bar, i) in salesTrend" :key="i">{{ bar.label }}</span>
           </div>
+          <div v-else class="empty-state">暂无销售数据</div>
         </div>
       </div>
       <div class="chart-card">
@@ -55,6 +57,7 @@
             <span class="name">{{ item.name }}</span>
             <span class="amount amount">¥{{ item.amount }}</span>
           </div>
+          <div v-if="topProducts.length === 0" class="empty-state">暂无数据</div>
         </div>
       </div>
     </div>
@@ -72,9 +75,10 @@
             <span class="order-type" :class="order.type">{{ order.typeName }}</span>
           </div>
           <div class="order-partner">{{ order.partner }}</div>
-          <div class="order-amount amount">¥{{ order.amount }}</div>
+          <div class="order-amount amount">¥{{ formatNumber(order.amount) }}</div>
           <div class="order-time">{{ order.time }}</div>
         </div>
+        <div v-if="recentOrders.length === 0" class="empty-state">暂无订单</div>
       </div>
     </div>
 
@@ -113,7 +117,7 @@
 
 <script setup lang="ts">
 import { reactive, ref, onMounted } from 'vue'
-import { reportApi } from '@/api'
+import { reportApi, orderApi, partnerApi } from '@/api'
 import type { DashboardStats } from '@/api/report'
 
 const stats = reactive<DashboardStats>({
@@ -127,28 +131,59 @@ const stats = reactive<DashboardStats>({
 })
 const loading = ref(false)
 
-const mockChartData = [45, 62, 38, 75, 55, 88, 65]
+const salesTrend = ref<{ label: string; height: number; sales: number }[]>([])
+const topProducts = ref<{ name: string; amount: number }[]>([])
+const recentOrders = ref<{ id: number; no: string; type: string; typeName: string; partner: string; amount: number; time: string }[]>([])
 
-const topProducts = [
-  { name: '伊利纯牛奶 250ml*24', amount: 450 },
-  { name: '可口可乐 330ml*6', amount: 320 },
-  { name: '五常大米 5kg', amount: 280 },
-  { name: '奥利奥夹心饼干 116g', amount: 210 },
-  { name: '康师傅红烧牛肉面', amount: 180 }
-]
-
-const recentOrders = [
-  { id: 1, no: 'XS20250422001', type: 'sale', typeName: '销售出库', partner: '张老板', amount: 450, time: '14:30' },
-  { id: 2, no: 'CG20250422003', type: 'purchase', typeName: '采购入库', partner: '供应商B', amount: 1200, time: '11:20' },
-  { id: 3, no: 'XS20250422002', type: 'sale', typeName: '销售出库', partner: '客户C', amount: 180, time: '09:45' },
-  { id: 4, no: 'TH20250422001', type: 'return', typeName: '销售退货', partner: '李老板', amount: 85, time: '昨天' }
-]
+const typeNameMap: Record<string, string> = {
+  sale: '销售出库',
+  purchase: '采购入库',
+  return: '销售退货'
+}
 
 async function loadDashboard() {
   loading.value = true
   try {
-    const res = await reportApi.dashboard()
-    Object.assign(stats, res.data)
+    const [dashRes, salesRes, orderRes, partnerRes] = await Promise.all([
+      reportApi.dashboard().catch(() => ({ data: null })),
+      reportApi.sales('week').catch(() => ({ data: null })),
+      orderApi.list().catch(() => ({ data: [] })),
+      partnerApi.list().catch(() => ({ data: [] }))
+    ])
+
+    if (dashRes.data) {
+      Object.assign(stats, dashRes.data)
+    }
+
+    if (salesRes.data && salesRes.data.length > 0) {
+      const maxSales = Math.max(...salesRes.data.map((s: any) => s.sales || 0), 1)
+      salesTrend.value = salesRes.data.slice(-7).map((s: any) => ({
+        label: s.date?.slice(5) || '',
+        height: Math.max(5, Math.round(((s.sales || 0) / maxSales) * 100)),
+        sales: s.sales || 0
+      }))
+    }
+
+    const partnerMap = new Map((partnerRes.data || []).map((p: any) => [p.id, p.name]))
+    recentOrders.value = (orderRes.data || []).slice(0, 5).map((o: any) => {
+      const date = o.createdAt ? new Date(o.createdAt) : null
+      const now = new Date()
+      const isToday = date && date.toDateString() === now.toDateString()
+      const timeStr = date
+        ? isToday
+          ? date.toTimeString().slice(0, 5)
+          : date.toISOString().slice(5, 10)
+        : ''
+      return {
+        id: o.id,
+        no: o.orderNo,
+        type: o.subType === 'return' ? 'return' : o.type,
+        typeName: o.subType === 'return' ? '销售退货' : typeNameMap[o.type] || o.type,
+        partner: partnerMap.get(o.partnerId) || `客户#${o.partnerId}`,
+        amount: o.totalAmount || 0,
+        time: timeStr
+      }
+    })
   } catch (err: any) {
     console.error('Dashboard load failed:', err.message)
   } finally {
@@ -500,5 +535,36 @@ function formatNumber(n: number) {
 
 .action-icon {
   font-size: 28px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-tertiary);
+  font-size: 14px;
+}
+
+.bar-tooltip {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.bar {
+  position: relative;
+}
+
+.bar:hover .bar-tooltip {
+  opacity: 1;
 }
 </style>
