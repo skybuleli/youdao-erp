@@ -7,7 +7,7 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "build": "tsc",
-    "check": "tsc --noEmit && eslint src --ext .ts"
+    "check": "tsc --noEmit && oxlint src/ --deny-warnings"
   },
   "dependencies": {
     "hono": "^4.6.0",

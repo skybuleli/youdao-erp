@@ -6,7 +6,7 @@
   "description": "有道食品经销存管理系统 - Kimi风格全栈进销存",
   "scripts": {
     "dev": "pnpm --filter @youdao-erp/web dev",
-    "check": "pnpm -r run check",
+    "check": "pnpm --filter @youdao-erp/server check & pnpm --filter @youdao-erp/web check & wait",
     "test": "pnpm -r run test",
     "build:web": "pnpm --filter @youdao-erp/web build",
     "build:server": "pnpm --filter @youdao-erp/server build",
@@ -29,6 +29,7 @@
     "eslint": "^9.0.0",
     "eslint-plugin-vue": "^10.8.0",
     "globals": "^17.5.0",
+    "oxlint": "^1.61.0",
     "typescript": "^5.4.0",
     "typescript-eslint": "^8.59.0",
     "vite": "^6.0.0",
