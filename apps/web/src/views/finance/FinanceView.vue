@@ -3,21 +3,21 @@
     <!-- Summary Cards -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(124, 92, 252, 0.15);">💰</div>
+        <div class="stat-icon" style="background: rgba(124, 92, 252, 0.15);"><Icon name="CreditCard" class="w-5 h-5" /></div>
         <div class="stat-info">
           <span class="stat-label">应收账款</span>
           <span class="stat-value amount gradient-text">¥{{ formatNumber(receivable) }}</span>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15);">💵</div>
+        <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15);"><Icon name="Banknote" class="w-4 h-4" /></div>
         <div class="stat-info">
           <span class="stat-label">应付账款</span>
           <span class="stat-value amount" style="color: var(--color-success);">¥{{ formatNumber(payable) }}</span>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(59, 130, 246, 0.15);">📊</div>
+        <div class="stat-icon" style="background: rgba(59, 130, 246, 0.15);"><Icon name="BarChart3" class="w-5 h-5" /></div>
         <div class="stat-info">
           <span class="stat-label">本月收支</span>
           <span class="stat-value amount" style="color: var(--color-info);">¥{{ formatNumber(monthNet) }}</span>
@@ -59,12 +59,12 @@
           </div>
         </div>
         <div class="bill-meta">
-          <span>📅 到期: {{ bill.dueDate }}</span>
-          <span>⏰ 逾期 {{ bill.overdue }} 天</span>
+          <span><Icon name="Calendar" class="w-4 h-4" /> 到期: {{ bill.dueDate }}</span>
+          <span><Icon name="Clock" class="w-4 h-4" /> 逾期 {{ bill.overdue }} 天</span>
         </div>
         <div class="bill-actions">
           <button class="action-btn" @click="viewDetail(bill)">查看详情</button>
-          <button class="action-btn primary" @click="receivePayment(bill)">💰 收款</button>
+          <button class="action-btn primary" @click="receivePayment(bill)"><Icon name="CreditCard" class="w-5 h-5" /> 收款</button>
         </div>
       </div>
     </div>
@@ -87,7 +87,7 @@
           </div>
         </div>
         <div class="bill-meta">
-          <span>📅 到期: {{ bill.dueDate }}</span>
+          <span><Icon name="Calendar" class="w-4 h-4" /> 到期: {{ bill.dueDate }}</span>
         </div>
         <div class="bill-actions">
           <button class="action-btn" @click="viewDetail(bill)">查看详情</button>
@@ -101,7 +101,7 @@
       <div v-if="incomeItems.length === 0 && expenseItems.length === 0" class="empty-state">暂无本月收支记录</div>
       <div v-if="incomeItems.length > 0" class="flow-card income">
         <div class="flow-header">
-          <span class="flow-icon">📈</span>
+          <span class="flow-icon"><Icon name="TrendingUp" class="w-5 h-5" /></span>
           <span class="flow-title">本月收入</span>
         </div>
         <div class="flow-amount amount gradient-text">¥{{ formatNumber(monthIncome) }}</div>
@@ -114,7 +114,7 @@
       </div>
       <div v-if="expenseItems.length > 0" class="flow-card expense">
         <div class="flow-header">
-          <span class="flow-icon">📉</span>
+          <span class="flow-icon"><Icon name="TrendingDown" class="w-5 h-5" /></span>
           <span class="flow-title">本月支出</span>
         </div>
         <div class="flow-amount amount" style="color: var(--color-danger);">¥{{ formatNumber(monthExpense) }}</div>
@@ -132,7 +132,7 @@
       <div class="modal-panel">
         <div class="modal-header">
           <h3>收款 - {{ currentBill?.partner }}</h3>
-          <button class="close-btn" @click="showReceiveModal = false">✕</button>
+          <button class="close-btn" @click="showReceiveModal = false"><Icon name="X" class="w-4 h-4" /></button>
         </div>
         <div class="modal-body">
           <div class="form-group">
@@ -173,6 +173,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import Icon from '@/components/Icon.vue'
 import { financeApi } from '@/api'
 import { useToastStore } from '@/stores/toast'
 
@@ -204,10 +205,10 @@ const incomeItems = ref<{ name: string; amount: number }[]>([])
 const expenseItems = ref<{ name: string; amount: number }[]>([])
 
 const paymentMethods = [
-  { value: 'cash', label: '现金', icon: '💵' },
-  { value: 'wechat', label: '微信', icon: '💚' },
-  { value: 'alipay', label: '支付宝', icon: '🔵' },
-  { value: 'bank', label: '银行', icon: '🏦' }
+  { value: 'cash', label: '现金', icon: 'Banknote' },
+  { value: 'wechat', label: '微信', icon: 'CircleDot' },
+  { value: 'alipay', label: '支付宝', icon: 'CircleDot' },
+  { value: 'bank', label: '银行', icon: 'Landmark' }
 ]
 
 async function loadData() {

@@ -3,7 +3,7 @@
     <!-- Scan Area -->
     <div class="scan-area" @click="handleScan">
       <div class="scan-content" :class="{ scanning: isScanning }">
-        <span class="scan-icon">📷</span>
+        <span class="scan-icon">ScanLine</span>
         <span class="scan-text">{{ isScanning ? '正在扫描...' : '点击扫码或输入条码' }}</span>
       </div>
     </div>
@@ -16,13 +16,13 @@
       </div>
 
       <div v-if="cart.length === 0" class="empty-cart">
-        <span class="empty-icon">🛒</span>
+        <span class="empty-icon">ShoppingCart</span>
         <span class="empty-text">扫码添加商品</span>
       </div>
 
       <div v-else class="cart-items">
         <div v-for="(item, index) in cart" :key="index" class="cart-item animate-slide-in">
-          <div class="item-icon">{{ item.icon || '📦' }}</div>
+          <div class="item-icon"><Icon :name="item.icon || 'Package'" class="w-5 h-5" /></div>
           <div class="item-info">
             <div class="item-name">{{ item.name }}</div>
             <div class="item-price">¥{{ item.price }}/{{ item.unit }}</div>
@@ -32,7 +32,7 @@
             <span class="qty-value amount">{{ item.qty }}</span>
             <button class="qty-btn" @click="increaseQty(index)">+</button>
             <span class="item-subtotal amount">¥{{ (item.price * item.qty).toFixed(2) }}</span>
-            <button class="delete-btn" @click="removeItem(index)">🗑️</button>
+            <button class="delete-btn" @click="removeItem(index)">Trash2</button>
           </div>
         </div>
       </div>
@@ -84,7 +84,7 @@
           :class="{ active: selectedPayment === method.value }"
           @click="selectedPayment = method.value"
         >
-          <span>{{ method.icon }}</span>
+          <Icon :name="method.icon" class="w-4 h-4" />
           <span>{{ method.label }}</span>
         </button>
       </div>
@@ -117,7 +117,7 @@
           class="quick-product-btn"
           @click="addToCart(product)"
         >
-          <span class="qp-icon">{{ product.icon }}</span>
+          <Icon :name="product.icon" class="qp-icon w-5 h-5" />
           <span class="qp-name">{{ product.name }}</span>
           <span class="qp-supplier">{{ product.supplierName || '-' }}</span>
           <span class="qp-price">¥{{ product.price }}</span>
@@ -144,9 +144,9 @@ const customers = ref<Array<{ id: number; name: string }>>([])
 const selectedCustomer = ref<number | null>(null)
 
 const paymentMethods = [
-  { value: 'cash', label: '现金', icon: '💵' },
-  { value: 'wechat', label: '微信', icon: '💚' },
-  { value: 'alipay', label: '支付宝', icon: '🔵' }
+  { value: 'cash', label: '现金', icon: 'Banknote' },
+  { value: 'wechat', label: '微信', icon: 'CircleDot' },
+  { value: 'alipay', label: '支付宝', icon: 'CircleDot' }
 ]
 
 async function loadData() {
@@ -161,7 +161,7 @@ async function loadData() {
       name: p.name,
       price: p.salePrice,
       supplierName: p.supplierName,
-      icon: '📦'
+      icon: 'Package'
     }))
     customers.value = (partnerRes.data || []).map((p: any) => ({ id: p.id, name: p.name }))
   } catch (e: any) {
@@ -188,7 +188,7 @@ function addToCart(product: { id: number; name: string; price: number; qty?: num
       ...product,
       qty: product.qty || 1,
       unit: product.unit || '件',
-      icon: product.icon || '📦'
+      icon: product.icon || 'Package'
     })
   }
 }

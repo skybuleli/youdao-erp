@@ -9,7 +9,7 @@
           :class="toast.type"
           @click="toastStore.remove(toast.id)"
         >
-          <span class="toast-icon">{{ iconMap[toast.type] }}</span>
+          <component :is="iconMap[toast.type]" class="toast-icon" />
           <span class="toast-message">{{ toast.message }}</span>
         </div>
       </transition-group>
@@ -19,14 +19,15 @@
 
 <script setup lang="ts">
 import { useToastStore } from '@/stores/toast'
+import { Check, X, AlertTriangle, Info } from 'lucide-vue-next'
 
 const toastStore = useToastStore()
 
-const iconMap: Record<string, string> = {
-  success: '✓',
-  error: '✕',
-  warning: '⚠',
-  info: 'ℹ'
+const iconMap: Record<string, any> = {
+  success: Check,
+  error: X,
+  warning: AlertTriangle,
+  info: Info
 }
 </script>
 
@@ -51,9 +52,9 @@ const iconMap: Record<string, string> = {
   gap: 10px;
   padding: 12px 20px;
   border-radius: var(--radius-lg);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-card);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
   pointer-events: auto;
   cursor: pointer;
   font-size: 14px;
@@ -63,7 +64,7 @@ const iconMap: Record<string, string> = {
 }
 
 .toast-item.success {
-  border-color: rgba(16, 185, 129, 0.4);
+  border-color: rgba(34, 197, 94, 0.4);
   color: var(--color-success);
 }
 
@@ -83,16 +84,9 @@ const iconMap: Record<string, string> = {
 }
 
 .toast-icon {
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  font-size: 12px;
-  font-weight: 700;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
-  border: 1.5px solid currentColor;
 }
 
 .toast-message {

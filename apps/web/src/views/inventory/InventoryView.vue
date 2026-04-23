@@ -35,7 +35,7 @@
     <div v-else class="inventory-list">
       <div v-for="item in filteredItems" :key="item.id" class="inventory-card" :class="stockClass(item)">
         <div class="item-header">
-          <div class="item-icon">{{ item.icon }}</div>
+          <div class="item-icon"><Icon :name="item.icon" class="w-5 h-5" /></div>
           <div class="item-info">
             <div class="item-name">{{ item.name }}</div>
             <div class="item-code">{{ item.code }} | 供应商: {{ item.supplierName || '-' }}</div>
@@ -79,7 +79,7 @@
         </div>
 
         <div class="item-actions">
-          <button class="action-btn" @click="adjustStock(item)">📊 调整库存</button>
+          <button class="action-btn" @click="adjustStock(item)"><Icon name="BarChart3" class="w-5 h-5" /> 调整库存</button>
           <button class="action-btn primary" @click="viewHistory(item)">📜 出入库记录</button>
         </div>
       </div>
@@ -87,7 +87,7 @@
 
     <!-- Stock Warning Banner -->
     <div v-if="warningItems.length > 0" class="warning-banner">
-      <span>⚠️ {{ warningItems.length }} 种商品库存不足，请及时补货</span>
+      <span><Icon name="AlertTriangle" class="w-4 h-4" /> {{ warningItems.length }} 种商品库存不足，请及时补货</span>
       <button class="warning-btn" @click="activeTab = 'warning'">查看</button>
     </div>
 
@@ -96,15 +96,15 @@
       <div class="modal-panel">
         <div class="modal-header">
           <h3>库存调整 - {{ adjustItem?.name }}</h3>
-          <button class="close-btn" @click="showAdjustModal = false">✕</button>
+          <button class="close-btn" @click="showAdjustModal = false"><Icon name="X" class="w-4 h-4" /></button>
         </div>
         <div class="modal-body">
           <div class="form-group">
             <label>调整类型</label>
             <div class="type-selector">
-              <button class="type-btn" :class="{ active: adjustType === 'in' }" @click="adjustType = 'in'">📥 入库</button>
+              <button class="type-btn" :class="{ active: adjustType === 'in' }" @click="adjustType = 'in'"><Icon name="ArrowDownLeft" class="w-4 h-4" /> 入库</button>
               <button class="type-btn" :class="{ active: adjustType === 'out' }" @click="adjustType = 'out'">📤 出库</button>
-              <button class="type-btn" :class="{ active: adjustType === 'count' }" @click="adjustType = 'count'">📝 盘点</button>
+              <button class="type-btn" :class="{ active: adjustType === 'count' }" @click="adjustType = 'count'"><Icon name="FileText" class="w-4 h-4" /> 盘点</button>
             </div>
           </div>
           <div class="form-group">
@@ -131,6 +131,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import Icon from '@/components/Icon.vue'
 import { productApi, partnerApi, inventoryApi } from '@/api'
 import { useToastStore } from '@/stores/toast'
 
@@ -179,7 +180,7 @@ async function loadData() {
       cost: p.purchasePrice,
       price: p.salePrice,
       supplierName: p.supplierName,
-      icon: '📦'
+      icon: 'Package'
     }))
   } catch (e: any) {
     toast.error(e.message || '加载失败')

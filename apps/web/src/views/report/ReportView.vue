@@ -20,28 +20,36 @@
     <!-- Summary Cards -->
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(124, 92, 252, 0.15);">📈</div>
+        <div class="stat-icon" style="background: var(--color-brand-muted);">
+          <TrendingUp class="w-5 h-5" style="color: var(--color-brand);" />
+        </div>
         <div class="stat-info">
           <span class="stat-label">销售收入</span>
           <span class="stat-value amount gradient-text">¥{{ formatNumber(report.sales) }}</span>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15);">📉</div>
+        <div class="stat-icon" style="background: var(--color-success-muted);">
+          <TrendingDown class="w-5 h-5" style="color: var(--color-success);" />
+        </div>
         <div class="stat-info">
           <span class="stat-label">采购支出</span>
           <span class="stat-value amount" style="color: var(--color-success);">¥{{ formatNumber(report.purchases) }}</span>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(59, 130, 246, 0.15);">💰</div>
+        <div class="stat-icon" style="background: var(--color-info-muted);">
+          <CreditCard class="w-5 h-5" style="color: var(--color-info);" />
+        </div>
         <div class="stat-info">
           <span class="stat-label">毛利润</span>
           <span class="stat-value amount" style="color: var(--color-info);">¥{{ formatNumber(report.profit) }}</span>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(245, 158, 11, 0.15);">📊</div>
+        <div class="stat-icon" style="background: var(--color-warning-muted);">
+          <BarChart3 class="w-5 h-5" style="color: var(--color-warning);" />
+        </div>
         <div class="stat-info">
           <span class="stat-label">利润率</span>
           <span class="stat-value amount" style="color: var(--color-warning);">{{ report.margin }}%</span>
@@ -52,7 +60,7 @@
     <!-- Sales Trend -->
     <div class="chart-card">
       <div class="chart-header">
-        <h3>📈 销售趋势</h3>
+        <h3><TrendingUp class="w-4 h-4" /> 销售趋势</h3>
         <span class="chart-subtitle">{{ dateRangeLabel }}</span>
       </div>
       <div v-if="trendData.length > 0" class="mock-chart">
@@ -70,7 +78,7 @@
     <!-- Top Products -->
     <div class="chart-card">
       <div class="chart-header">
-        <h3>🔥 商品销售排行</h3>
+        <h3><Flame class="w-4 h-4" /> 商品销售排行</h3>
       </div>
       <div class="rank-list">
         <div v-for="(item, i) in topProducts" :key="i" class="rank-item">
@@ -90,7 +98,7 @@
     <!-- Category Breakdown -->
     <div class="chart-card">
       <div class="chart-header">
-        <h3>🥧 分类销售占比</h3>
+        <h3><PieChart class="w-4 h-4" /> 分类销售占比</h3>
       </div>
       <div class="category-list">
         <div v-for="(cat, i) in categoryData" :key="i" class="category-item">
@@ -110,7 +118,7 @@
     <!-- Partner Summary -->
     <div class="chart-card">
       <div class="chart-header">
-        <h3>🤝 客户销售排行</h3>
+        <h3><Users class="w-4 h-4" /> 客户销售排行</h3>
       </div>
       <div class="partner-list">
         <div v-for="(p, i) in partnerRanking" :key="i" class="partner-row">
@@ -128,7 +136,7 @@
     <!-- Supplier Inventory Summary -->
     <div class="chart-card">
       <div class="chart-header">
-        <h3>📦 供应商库存统计</h3>
+        <h3><Package class="w-4 h-4" /> 供应商库存统计</h3>
       </div>
       <div class="supplier-list">
         <div v-for="(s, i) in supplierInventory" :key="i" class="supplier-row">
@@ -149,6 +157,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { reportApi, productApi } from '@/api'
+import { TrendingUp, TrendingDown, CreditCard, BarChart3, Flame, PieChart, Users, Package } from 'lucide-vue-next'
 
 const dateRange = ref('week')
 const loading = ref(false)

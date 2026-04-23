@@ -6,11 +6,11 @@
     <!-- Mobile Header -->
     <header class="mobile-header glass no-print">
       <button class="menu-btn" @click="sidebarOpen = !sidebarOpen">
-        <span class="menu-icon">☰</span>
+        <Menu class="w-5 h-5" />
       </button>
       <span class="page-title">{{ pageTitle }}</span>
       <button class="scan-btn" @click="goToScan">
-        <span>📷</span>
+        <ScanLine class="w-5 h-5" />
       </button>
     </header>
 
@@ -18,10 +18,14 @@
     <aside class="sidebar" :class="{ open: sidebarOpen }" @click.self="sidebarOpen = false">
       <div class="sidebar-header">
         <div class="logo">
-          <div class="logo-icon">YD</div>
+          <div class="logo-icon">
+            <Layers class="w-5 h-5 text-white" />
+          </div>
           <span class="logo-text">有道ERP</span>
         </div>
-        <button class="close-btn no-desktop" @click="sidebarOpen = false">✕</button>
+        <button class="close-btn no-desktop" @click="sidebarOpen = false">
+          <X class="w-5 h-5" />
+        </button>
       </div>
 
       <nav class="nav-menu">
@@ -33,18 +37,18 @@
           :class="{ active: $route.path === item.path }"
           @click="sidebarOpen = false"
         >
-          <span class="nav-icon">{{ item.icon }}</span>
+          <component :is="item.icon" class="nav-icon" />
           <span class="nav-label">{{ item.label }}</span>
         </router-link>
       </nav>
 
       <div class="sidebar-footer">
         <button class="theme-toggle" @click="themeStore.toggleTheme()">
-          <span>{{ themeStore.currentTheme === 'dark' ? '🌙' : '☀️' }}</span>
+          <component :is="themeStore.currentTheme === 'dark' ? Moon : Sun" class="w-4 h-4" />
           <span class="toggle-label">{{ themeStore.currentTheme === 'dark' ? '深色' : '浅色' }}</span>
         </button>
         <button class="logout-btn" @click="logout">
-          <span>👋</span>
+          <LogOut class="w-4 h-4" />
           <span>退出登录</span>
         </button>
       </div>
@@ -71,7 +75,7 @@
         class="bottom-nav-item"
         :class="{ active: $route.path === item.path }"
       >
-        <span class="bottom-icon">{{ item.icon }}</span>
+        <component :is="item.icon" class="bottom-icon" />
         <span class="bottom-label">{{ item.label }}</span>
       </router-link>
     </nav>
@@ -84,6 +88,24 @@ import { useRoute, useRouter } from 'vue-router'
 import { useThemeStore } from '@/stores/theme'
 import { useAuthStore } from '@/stores/auth'
 import { useLoadingStore } from '@/stores/loading'
+import {
+  LayoutDashboard,
+  Package,
+  Users,
+  ShoppingCart,
+  Store,
+  Warehouse,
+  CreditCard,
+  BarChart3,
+  Settings,
+  ScanLine,
+  Menu,
+  X,
+  Moon,
+  Sun,
+  LogOut,
+  Layers
+} from 'lucide-vue-next'
 
 const route = useRoute()
 const router = useRouter()
@@ -115,22 +137,22 @@ const pageTitle = computed(() => {
 })
 
 const menuItems = [
-  { path: '/dashboard', label: '仪表盘', icon: '📊' },
-  { path: '/product', label: '商品管理', icon: '📦' },
-  { path: '/partner', label: '往来单位', icon: '🤝' },
-  { path: '/purchase', label: '采购管理', icon: '📥' },
-  { path: '/sale', label: '销售管理', icon: '🛒' },
-  { path: '/inventory', label: '库存管理', icon: '🏭' },
-  { path: '/finance', label: '财务管理', icon: '💰' },
-  { path: '/report', label: '报表分析', icon: '📈' },
-  { path: '/setting', label: '系统设置', icon: '⚙️' }
+  { path: '/dashboard', label: '仪表盘', icon: LayoutDashboard },
+  { path: '/product', label: '商品管理', icon: Package },
+  { path: '/partner', label: '往来单位', icon: Users },
+  { path: '/purchase', label: '采购管理', icon: ShoppingCart },
+  { path: '/sale', label: '销售管理', icon: Store },
+  { path: '/inventory', label: '库存管理', icon: Warehouse },
+  { path: '/finance', label: '财务管理', icon: CreditCard },
+  { path: '/report', label: '报表分析', icon: BarChart3 },
+  { path: '/setting', label: '系统设置', icon: Settings }
 ]
 
 const bottomMenuItems = [
-  { path: '/dashboard', label: '首页', icon: '📊' },
-  { path: '/sale/pos', label: '开单', icon: '🛒' },
-  { path: '/inventory', label: '库存', icon: '🏭' },
-  { path: '/setting', label: '我的', icon: '👤' }
+  { path: '/dashboard', label: '首页', icon: LayoutDashboard },
+  { path: '/sale/pos', label: '开单', icon: Store },
+  { path: '/inventory', label: '库存', icon: Warehouse },
+  { path: '/setting', label: '我的', icon: Settings }
 ]
 
 function goToScan() {
@@ -147,7 +169,7 @@ function logout() {
 .main-layout {
   display: flex;
   min-height: 100vh;
-  background: var(--bg-base);
+  background: var(--color-background);
 }
 
 /* Global Loading Bar */
@@ -156,8 +178,8 @@ function logout() {
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, #7C5CFC, transparent);
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-brand), transparent);
   background-size: 200% 100%;
   z-index: 1000;
   opacity: 0;
@@ -187,27 +209,32 @@ function logout() {
   justify-content: space-between;
   padding: 0 16px;
   z-index: 100;
-  border-bottom: 1px solid var(--border-subtle);
 }
 
 .menu-btn,
 .scan-btn {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  background: var(--color-secondary);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  color: var(--text-primary);
-  font-size: 18px;
+  color: var(--color-foreground);
   cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.menu-btn:hover,
+.scan-btn:hover {
+  background: var(--color-accent);
 }
 
 .page-title {
   font-weight: 600;
   font-size: 16px;
+  color: var(--color-foreground);
 }
 
 /* Sidebar */
@@ -217,13 +244,13 @@ function logout() {
   top: 0;
   bottom: 0;
   width: 260px;
-  background: var(--bg-elevated);
-  border-right: 1px solid var(--border-subtle);
+  background: var(--color-background);
+  border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   z-index: 200;
   transform: translateX(-100%);
-  transition: transform 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar.open {
@@ -235,7 +262,7 @@ function logout() {
   align-items: center;
   justify-content: space-between;
   padding: 20px;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .logo {
@@ -245,32 +272,39 @@ function logout() {
 }
 
 .logo-icon {
-  width: 40px;
-  height: 40px;
-  background: var(--gradient-primary);
-  border-radius: var(--radius-md);
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #7c5cfc 0%, #5b8def 100%);
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-display);
-  font-weight: 700;
-  color: white;
 }
 
 .logo-text {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 700;
-  background: var(--gradient-primary);
+  background: linear-gradient(135deg, #7c5cfc 0%, #5b8def 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .close-btn {
   background: none;
   border: none;
-  color: var(--text-secondary);
-  font-size: 20px;
+  color: var(--color-muted-foreground);
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: var(--radius-md);
+  transition: background 0.15s ease;
+}
+
+.close-btn:hover {
+  background: var(--color-accent);
 }
 
 .nav-menu {
@@ -278,7 +312,7 @@ function logout() {
   padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   overflow-y: auto;
 }
 
@@ -286,58 +320,64 @@ function logout() {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 16px;
+  padding: 10px 14px;
   border-radius: var(--radius-md);
-  color: var(--text-secondary);
+  color: var(--color-muted-foreground);
   text-decoration: none;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
+  font-size: 14px;
+  font-weight: 500;
 }
 
 .nav-item:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
+  background: var(--color-accent);
+  color: var(--color-accent-foreground);
 }
 
 .nav-item.active {
-  background: var(--gradient-subtle);
-  color: var(--text-primary);
-  border-left: 3px solid #7C5CFC;
+  background: var(--color-brand-muted);
+  color: var(--color-brand);
 }
 
 .nav-icon {
-  font-size: 20px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 .nav-label {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
 }
 
 .sidebar-footer {
   padding: 12px;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .theme-toggle,
 .logout-btn {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
+  gap: 10px;
+  padding: 8px 14px;
   border-radius: var(--radius-md);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
+  background: var(--color-secondary);
+  border: 1px solid var(--color-border);
+  color: var(--color-muted-foreground);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s ease;
 }
 
 .theme-toggle:hover,
 .logout-btn:hover {
-  background: var(--bg-hover);
+  background: var(--color-accent);
+  color: var(--color-accent-foreground);
 }
 
 /* Overlay */
@@ -349,7 +389,7 @@ function logout() {
   z-index: 150;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
 }
 
 .sidebar-overlay.show {
@@ -363,6 +403,7 @@ function logout() {
   padding: 72px 16px 80px;
   min-height: 100vh;
   overflow-x: hidden;
+  width: 100%;
 }
 
 /* Bottom Nav */
@@ -372,12 +413,13 @@ function logout() {
   left: 0;
   right: 0;
   height: 64px;
-  background: var(--bg-elevated);
-  border-top: 1px solid var(--border-subtle);
+  background: var(--color-card);
+  border-top: 1px solid var(--color-border);
   display: flex;
   justify-content: space-around;
   align-items: center;
   z-index: 100;
+  backdrop-filter: blur(12px);
 }
 
 .bottom-nav-item {
@@ -385,21 +427,24 @@ function logout() {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  color: var(--text-tertiary);
+  color: var(--color-muted-foreground);
   text-decoration: none;
   padding: 8px 16px;
+  transition: color 0.15s ease;
 }
 
 .bottom-nav-item.active {
-  color: #7C5CFC;
+  color: var(--color-brand);
 }
 
 .bottom-icon {
-  font-size: 22px;
+  width: 20px;
+  height: 20px;
 }
 
 .bottom-label {
   font-size: 11px;
+  font-weight: 500;
 }
 
 /* Desktop */

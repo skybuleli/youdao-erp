@@ -25,7 +25,7 @@
           class="quick-product-btn"
           @click="addToCart(product)"
         >
-          <span class="qp-icon">📦</span>
+          <span class="qp-icon">Package</span>
           <span class="qp-name">{{ product.name }}</span>
           <span class="qp-price">¥{{ product.price }}</span>
         </button>
@@ -41,13 +41,13 @@
       </div>
 
       <div v-if="cart.length === 0" class="empty-cart">
-        <span class="empty-icon">🛒</span>
+        <span class="empty-icon">ShoppingCart</span>
         <span class="empty-text">点击上方商品添加</span>
       </div>
 
       <div v-else class="cart-items">
         <div v-for="(item, index) in cart" :key="index" class="cart-item">
-          <div class="item-icon">📦</div>
+          <div class="item-icon"><Icon name="Package" class="w-5 h-5" /></div>
           <div class="item-info">
             <div class="item-name">{{ item.name }}</div>
             <div class="item-price">¥{{ item.price }}/{{ item.unit }}</div>
@@ -57,7 +57,7 @@
             <span class="qty-value amount">{{ item.qty }}</span>
             <button class="qty-btn" @click="increaseQty(index)">+</button>
             <span class="item-subtotal amount">¥{{ (item.price * item.qty).toFixed(2) }}</span>
-            <button class="delete-btn" @click="removeItem(index)">🗑️</button>
+            <button class="delete-btn" @click="removeItem(index)">Trash2</button>
           </div>
         </div>
       </div>

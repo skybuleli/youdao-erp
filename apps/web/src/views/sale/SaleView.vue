@@ -26,7 +26,7 @@
         <span>🔄 退货</span>
       </router-link>
       <router-link to="/sale/pos" class="btn-primary">
-        <span>🛒 开单</span>
+        <span>ShoppingCart 开单</span>
       </router-link>
     </div>
 
@@ -66,7 +66,7 @@
         <div class="order-footer">
           <span class="order-date">{{ order.date }}</span>
           <div class="order-actions">
-            <button class="action-btn" @click="printReceipt(order)">🖨️ 打印</button>
+            <button class="action-btn" @click="printReceipt(order)"><Icon name="Printer" class="w-4 h-4" /> 打印</button>
             <button class="action-btn" @click="viewDetail(order)">详情</button>
           </div>
         </div>
@@ -77,6 +77,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import Icon from '@/components/Icon.vue'
 import { orderApi } from '@/api'
 import { useToastStore } from '@/stores/toast'
 

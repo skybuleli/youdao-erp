@@ -7,7 +7,7 @@
         <div class="profile-name">管理员</div>
         <div class="profile-role">超级管理员</div>
       </div>
-      <button class="edit-btn" @click="editProfile">✏️</button>
+      <button class="edit-btn" @click="editProfile"><Icon name="Pencil" class="w-4 h-4" /></button>
     </div>
 
     <!-- Settings Groups -->
@@ -23,7 +23,7 @@
           <span class="arrow">›</span>
         </div>
         <div class="setting-item" @click="showPrinterModal = true">
-          <div class="setting-icon">🖨️</div>
+          <div class="setting-icon"><Icon name="Printer" class="w-4 h-4" /></div>
           <div class="setting-info">
             <span class="setting-name">打印设置</span>
             <span class="setting-desc">小票打印格式、打印机配置</span>
@@ -48,7 +48,7 @@
       <h4 class="group-title">🎨 外观</h4>
       <div class="setting-list">
         <div class="setting-item">
-          <div class="setting-icon">🌙</div>
+          <div class="setting-icon"><Icon name="Moon" class="w-4 h-4" /></div>
           <div class="setting-info">
             <span class="setting-name">深色模式</span>
             <span class="setting-desc">切换深色/浅色主题</span>
@@ -95,10 +95,10 @@
     </div>
 
     <div class="setting-group">
-      <h4 class="group-title">📋 关于</h4>
+      <h4 class="group-title"><Icon name="ClipboardList" class="w-4 h-4" /> 关于</h4>
       <div class="setting-list">
         <div class="setting-item">
-          <div class="setting-icon">📦</div>
+          <div class="setting-icon"><Icon name="Package" class="w-5 h-5" /></div>
           <div class="setting-info">
             <span class="setting-name">版本信息</span>
             <span class="setting-desc">有道ERP v0.1.0</span>
@@ -118,7 +118,7 @@
 
     <!-- Logout -->
     <button class="logout-btn" @click="logout">
-      <span>👋 退出登录</span>
+      <span><Icon name="LogOut" class="w-4 h-4" /> 退出登录</span>
     </button>
 
     <!-- Shop Info Modal -->
@@ -126,7 +126,7 @@
       <div class="modal-panel">
         <div class="modal-header">
           <h3>店铺信息</h3>
-          <button class="close-btn" @click="showShopModal = false">✕</button>
+          <button class="close-btn" @click="showShopModal = false"><Icon name="X" class="w-4 h-4" /></button>
         </div>
         <div class="modal-body">
           <div class="form-group">
@@ -154,7 +154,7 @@
       <div class="modal-panel">
         <div class="modal-header">
           <h3>修改密码</h3>
-          <button class="close-btn" @click="showPasswordModal = false">✕</button>
+          <button class="close-btn" @click="showPasswordModal = false"><Icon name="X" class="w-4 h-4" /></button>
         </div>
         <div class="modal-body">
           <div class="form-group">
@@ -181,6 +181,7 @@
 
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+import Icon from '@/components/Icon.vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'

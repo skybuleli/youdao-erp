@@ -35,7 +35,7 @@
       </div>
 
       <div v-if="items.length === 0" class="empty-state">
-        <span class="empty-icon">📦</span>
+        <span class="empty-icon"><Icon name="Package" class="w-5 h-5" /></span>
         <span>点击添加商品开始采购</span>
       </div>
 
@@ -63,7 +63,7 @@
               <span class="subtotal amount">¥{{ (item.price * item.qty).toFixed(2) }}</span>
             </div>
           </div>
-          <button class="remove-btn" @click="removeItem(index)">✕</button>
+          <button class="remove-btn" @click="removeItem(index)"><Icon name="X" class="w-4 h-4" /></button>
         </div>
       </div>
     </div>
@@ -116,7 +116,7 @@
       <div class="modal-panel">
         <div class="modal-header">
           <h3>选择商品</h3>
-          <button class="close-btn" @click="showProductPicker = false">✕</button>
+          <button class="close-btn" @click="showProductPicker = false"><Icon name="X" class="w-4 h-4" /></button>
         </div>
         <div class="picker-search">
           <span>🔍</span>
@@ -129,7 +129,7 @@
             class="picker-item"
             @click="addItem(product)"
           >
-            <span class="picker-icon">{{ product.icon }}</span>
+            <span class="picker-icon"><Icon :name="product.icon" class="w-5 h-5" /></span>
             <div class="picker-info">
               <div class="picker-name">{{ product.name }}</div>
               <div class="picker-price">进价 ¥{{ product.cost }} | 库存 {{ product.stock }}</div>
@@ -144,6 +144,7 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted } from 'vue'
+import Icon from '@/components/Icon.vue'
 import { useRouter } from 'vue-router'
 import { productApi, orderApi, partnerApi } from '@/api'
 import { useToastStore } from '@/stores/toast'
@@ -180,7 +181,7 @@ async function loadData() {
       cost: p.purchasePrice,
       stock: p.stockQty,
       supplierId: p.supplierId,
-      icon: '📦'
+      icon: 'Package'
     }))
     suppliers.value = partnerRes.data
   } catch (e: any) {

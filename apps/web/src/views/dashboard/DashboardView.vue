@@ -1,25 +1,31 @@
 <template>
   <div class="dashboard-view">
-    <!-- Stats Cards -->
+    <!-- Stats Cards - Bento Grid -->
     <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(124, 92, 252, 0.15);">💰</div>
+      <div class="stat-card spotlight" @mousemove="handleSpotlight" @mouseleave="resetSpotlight">
+        <div class="stat-icon" style="background: var(--color-brand-muted);">
+          <TrendingUp class="w-6 h-6" style="color: var(--color-brand);" />
+        </div>
         <div class="stat-info">
           <span class="stat-label">今日销售</span>
           <span class="stat-value gradient-text amount">¥{{ formatNumber(stats.todaySales) }}</span>
           <span class="stat-change positive">↑ 12%</span>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15);">📥</div>
+      <div class="stat-card spotlight" @mousemove="handleSpotlight" @mouseleave="resetSpotlight">
+        <div class="stat-icon" style="background: var(--color-success-muted);">
+          <ArrowDownLeft class="w-6 h-6" style="color: var(--color-success);" />
+        </div>
         <div class="stat-info">
           <span class="stat-label">今日采购</span>
           <span class="stat-value amount" style="color: var(--color-success);">¥{{ formatNumber(stats.todayPurchases) }}</span>
           <span class="stat-change negative">↓ 5%</span>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-icon" style="background: rgba(245, 158, 11, 0.15);">⚠️</div>
+      <div class="stat-card spotlight" @mousemove="handleSpotlight" @mouseleave="resetSpotlight">
+        <div class="stat-icon" style="background: var(--color-warning-muted);">
+          <AlertTriangle class="w-6 h-6" style="color: var(--color-warning);" />
+        </div>
         <div class="stat-info">
           <span class="stat-label">库存预警</span>
           <span class="stat-value amount" style="color: var(--color-warning);">{{ stats.warningCount }}种</span>
@@ -30,9 +36,10 @@
 
     <!-- Charts Area -->
     <div class="charts-grid">
-      <div class="chart-card">
+      <div class="chart-card bento-item-large">
         <div class="chart-header">
-          <h3>📈 近7天销售趋势</h3>
+          <BarChart3 class="w-4 h-4" />
+          <h3>近7天销售趋势</h3>
         </div>
         <div class="chart-placeholder">
           <div v-if="salesTrend.length > 0" class="mock-chart">
@@ -44,12 +51,16 @@
           <div v-if="salesTrend.length > 0" class="mock-labels">
             <span v-for="(bar, i) in salesTrend" :key="i">{{ bar.label }}</span>
           </div>
-          <div v-else class="empty-state">暂无销售数据</div>
+          <div v-else class="empty-state">
+            <BarChart3 class="w-8 h-8 opacity-40" />
+            <span>暂无销售数据</span>
+          </div>
         </div>
       </div>
       <div class="chart-card">
         <div class="chart-header">
-          <h3>🔥 今日畅销 TOP 5</h3>
+          <Flame class="w-4 h-4" />
+          <h3>今日畅销 TOP 5</h3>
         </div>
         <div class="top-products">
           <div v-for="(item, i) in topProducts" :key="i" class="top-item">
@@ -57,16 +68,25 @@
             <span class="name">{{ item.name }}</span>
             <span class="amount amount">¥{{ item.amount }}</span>
           </div>
-          <div v-if="topProducts.length === 0" class="empty-state">暂无数据</div>
+          <div v-if="topProducts.length === 0" class="empty-state">
+            <Package class="w-8 h-8 opacity-40" />
+            <span>暂无数据</span>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Recent Orders -->
-    <div class="recent-card">
+    <div class="recent-card card">
       <div class="section-header">
-        <h3>📝 最近开单</h3>
-        <router-link to="/sale" class="link">查看全部 →</router-link>
+        <div class="section-title">
+          <FileText class="w-4 h-4" />
+          <h3>最近开单</h3>
+        </div>
+        <router-link to="/sale" class="link">
+          查看全部
+          <ChevronRight class="w-4 h-4" />
+        </router-link>
       </div>
       <div class="order-list">
         <div v-for="order in recentOrders" :key="order.id" class="order-item">
@@ -78,36 +98,44 @@
           <div class="order-amount amount">¥{{ formatNumber(order.amount) }}</div>
           <div class="order-time">{{ order.time }}</div>
         </div>
-        <div v-if="recentOrders.length === 0" class="empty-state">暂无订单</div>
+        <div v-if="recentOrders.length === 0" class="empty-state">
+          <FileText class="w-8 h-8 opacity-40" />
+          <span>暂无订单</span>
+        </div>
       </div>
     </div>
 
     <!-- Quick Actions -->
-    <div class="quick-actions">
-      <h3>⚡ 快捷操作</h3>
+    <div class="quick-actions card">
+      <div class="section-header">
+        <div class="section-title">
+          <Zap class="w-4 h-4" />
+          <h3>快捷操作</h3>
+        </div>
+      </div>
       <div class="action-grid">
         <router-link to="/sale/pos" class="action-btn primary">
-          <span class="action-icon">🛒</span>
+          <Store class="action-icon" />
           <span>销售开单</span>
         </router-link>
         <router-link to="/purchase/new" class="action-btn">
-          <span class="action-icon">📥</span>
+          <ShoppingCart class="action-icon" />
           <span>采购入库</span>
         </router-link>
         <router-link to="/inventory" class="action-btn">
-          <span class="action-icon">📦</span>
+          <Search class="action-icon" />
           <span>库存查询</span>
         </router-link>
         <router-link to="/inventory" class="action-btn">
-          <span class="action-icon">📋</span>
+          <ClipboardList class="action-icon" />
           <span>库存盘点</span>
         </router-link>
         <router-link to="/finance" class="action-btn">
-          <span class="action-icon">💰</span>
+          <CreditCard class="action-icon" />
           <span>收款</span>
         </router-link>
         <router-link to="/report" class="action-btn">
-          <span class="action-icon">📊</span>
+          <BarChart3 class="action-icon" />
           <span>报表</span>
         </router-link>
       </div>
@@ -119,6 +147,22 @@
 import { reactive, ref, onMounted } from 'vue'
 import { reportApi, orderApi, partnerApi } from '@/api'
 import type { DashboardStats } from '@/api/report'
+import {
+  TrendingUp,
+  ArrowDownLeft,
+  AlertTriangle,
+  BarChart3,
+  Flame,
+  FileText,
+  ChevronRight,
+  Zap,
+  Store,
+  ShoppingCart,
+  Search,
+  ClipboardList,
+  CreditCard,
+  Package
+} from 'lucide-vue-next'
 
 const stats = reactive<DashboardStats>({
   todaySales: 0,
@@ -139,6 +183,22 @@ const typeNameMap: Record<string, string> = {
   sale: '销售出库',
   purchase: '采购入库',
   return: '销售退货'
+}
+
+// Spotlight effect handler
+function handleSpotlight(e: MouseEvent) {
+  const card = e.currentTarget as HTMLElement
+  const rect = card.getBoundingClientRect()
+  const x = ((e.clientX - rect.left) / rect.width) * 100
+  const y = ((e.clientY - rect.top) / rect.height) * 100
+  card.style.setProperty('--mouse-x', `${x}%`)
+  card.style.setProperty('--mouse-y', `${y}%`)
+}
+
+function resetSpotlight(e: MouseEvent) {
+  const card = e.currentTarget as HTMLElement
+  card.style.removeProperty('--mouse-x')
+  card.style.removeProperty('--mouse-y')
 }
 
 async function loadDashboard() {
@@ -202,62 +262,65 @@ function formatNumber(n: number) {
 .dashboard-view {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1rem;
 }
 
 /* Stats Grid */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .stat-card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 20px;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 1.25rem;
   display: flex;
   align-items: center;
-  gap: 16px;
-  transition: all 0.2s;
+  gap: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: default;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow-md);
 }
 
 .stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md);
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
   flex-shrink: 0;
 }
 
 .stat-info {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.25rem;
+  min-width: 0;
 }
 
 .stat-label {
-  font-size: 13px;
-  color: var(--text-secondary);
+  font-size: 0.8125rem;
+  color: var(--color-muted-foreground);
+  font-weight: 500;
 }
 
 .stat-value {
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 700;
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
+  line-height: 1.2;
 }
 
 .stat-change {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
 }
 
@@ -270,7 +333,7 @@ function formatNumber(n: number) {
 }
 
 .stat-hint {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--color-warning);
 }
 
@@ -278,7 +341,7 @@ function formatNumber(n: number) {
 .charts-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 @media (min-width: 768px) {
@@ -288,40 +351,53 @@ function formatNumber(n: number) {
 }
 
 .chart-card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 20px;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 1.25rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.chart-card:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.chart-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  color: var(--color-foreground);
 }
 
 .chart-header h3 {
-  font-size: 16px;
+  font-size: 0.9375rem;
   font-weight: 600;
-  margin-bottom: 16px;
 }
 
 .mock-chart {
   display: flex;
   align-items: flex-end;
-  gap: 12px;
+  gap: 0.75rem;
   height: 180px;
-  padding-bottom: 8px;
+  padding-bottom: 0.5rem;
 }
 
 .bar {
   flex: 1;
   display: flex;
   align-items: flex-end;
-  border-radius: 4px 4px 0 0;
+  border-radius: 0.375rem 0.375rem 0 0;
   overflow: hidden;
+  position: relative;
 }
 
 .bar-fill {
   width: 100%;
   height: 100%;
-  background: var(--gradient-primary);
+  background: linear-gradient(180deg, var(--color-brand) 0%, rgba(124, 92, 252, 0.4) 100%);
   opacity: 0.8;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s ease;
 }
 
 .bar:hover .bar-fill {
@@ -331,12 +407,12 @@ function formatNumber(n: number) {
 .mock-labels {
   display: flex;
   justify-content: space-between;
-  padding: 0 4px;
+  padding: 0 0.25rem;
 }
 
 .mock-labels span {
-  font-size: 12px;
-  color: var(--text-tertiary);
+  font-size: 0.6875rem;
+  color: var(--color-muted-foreground);
   flex: 1;
   text-align: center;
 }
@@ -345,27 +421,32 @@ function formatNumber(n: number) {
 .top-products {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0.5rem;
 }
 
 .top-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  background: var(--bg-surface);
+  gap: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  background: var(--color-secondary);
   border-radius: var(--radius-md);
+  transition: background 0.15s ease;
+}
+
+.top-item:hover {
+  background: var(--color-accent);
 }
 
 .rank {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--gradient-primary);
+  background: linear-gradient(135deg, #7c5cfc 0%, #5b8def 100%);
   border-radius: var(--radius-sm);
-  font-size: 12px;
+  font-size: 0.6875rem;
   font-weight: 700;
   color: white;
   flex-shrink: 0;
@@ -373,8 +454,8 @@ function formatNumber(n: number) {
 
 .name {
   flex: 1;
-  font-size: 14px;
-  color: var(--text-primary);
+  font-size: 0.8125rem;
+  color: var(--color-foreground);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -382,117 +463,133 @@ function formatNumber(n: number) {
 
 .amount {
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--color-foreground);
+  font-size: 0.8125rem;
 }
 
 /* Recent Orders */
 .recent-card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 20px;
+  padding: 1.25rem;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 1rem;
 }
 
-.section-header h3 {
-  font-size: 16px;
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-foreground);
+}
+
+.section-title h3 {
+  font-size: 0.9375rem;
   font-weight: 600;
 }
 
 .link {
-  color: #7C5CFC;
-  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  color: var(--color-brand);
+  font-size: 0.8125rem;
   text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.15s ease;
+}
+
+.link:hover {
+  opacity: 0.8;
 }
 
 .order-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.375rem;
 }
 
 .order-item {
   display: grid;
   grid-template-columns: auto 1fr auto auto;
-  gap: 12px;
+  gap: 0.75rem;
   align-items: center;
-  padding: 12px;
-  background: var(--bg-surface);
+  padding: 0.75rem;
+  background: var(--color-secondary);
   border-radius: var(--radius-md);
-  font-size: 14px;
+  font-size: 0.8125rem;
+  transition: background 0.15s ease;
+}
+
+.order-item:hover {
+  background: var(--color-accent);
 }
 
 .order-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem;
 }
 
 .order-no {
-  font-size: 12px;
-  color: var(--text-tertiary);
-  font-family: monospace;
+  font-size: 0.6875rem;
+  color: var(--color-muted-foreground);
+  font-family: var(--font-mono);
 }
 
 .order-type {
-  font-size: 11px;
-  padding: 2px 8px;
+  font-size: 0.6875rem;
+  padding: 0.125rem 0.5rem;
   border-radius: var(--radius-full);
   width: fit-content;
+  font-weight: 500;
 }
 
 .order-type.sale {
-  background: rgba(124, 92, 252, 0.15);
-  color: #7C5CFC;
+  background: var(--color-brand-muted);
+  color: var(--color-brand);
 }
 
 .order-type.purchase {
-  background: rgba(16, 185, 129, 0.15);
+  background: var(--color-success-muted);
   color: var(--color-success);
 }
 
 .order-type.return {
-  background: rgba(245, 158, 11, 0.15);
+  background: var(--color-warning-muted);
   color: var(--color-warning);
 }
 
 .order-partner {
-  color: var(--text-secondary);
+  color: var(--color-muted-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .order-amount {
   font-weight: 600;
+  font-family: var(--font-mono);
 }
 
 .order-time {
-  font-size: 12px;
-  color: var(--text-tertiary);
+  font-size: 0.6875rem;
+  color: var(--color-muted-foreground);
+  font-family: var(--font-mono);
 }
 
 /* Quick Actions */
 .quick-actions {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-}
-
-.quick-actions h3 {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 16px;
+  padding: 1.25rem;
 }
 
 .action-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 @media (min-width: 768px) {
@@ -505,63 +602,66 @@ function formatNumber(n: number) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 16px 8px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
+  gap: 0.5rem;
+  padding: 1rem 0.5rem;
+  background: var(--color-secondary);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  color: var(--text-primary);
+  color: var(--color-foreground);
   text-decoration: none;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
-  transition: all 0.2s;
+  transition: all 0.15s ease;
 }
 
 .action-btn:hover {
-  background: var(--bg-hover);
-  transform: translateY(-2px);
+  background: var(--color-accent);
+  transform: translateY(-1px);
 }
 
 .action-btn.primary {
-  background: var(--accent-primary);
-  border: none;
+  background: var(--color-brand);
+  border-color: var(--color-brand);
   color: white;
-  
 }
 
 .action-btn.primary:hover {
-  
+  opacity: 0.9;
 }
 
 .action-icon {
-  font-size: 28px;
+  width: 24px;
+  height: 24px;
 }
 
 .empty-state {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text-tertiary);
-  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 2.5rem 1.25rem;
+  color: var(--color-muted-foreground);
+  font-size: 0.8125rem;
 }
 
 .bar-tooltip {
   position: absolute;
-  top: -24px;
+  top: -28px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  padding: 2px 6px;
+  background: var(--color-popover);
+  border: 1px solid var(--color-border);
+  padding: 0.25rem 0.5rem;
   border-radius: var(--radius-sm);
-  font-size: 11px;
+  font-size: 0.6875rem;
   white-space: nowrap;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s ease;
   pointer-events: none;
-}
-
-.bar {
-  position: relative;
+  color: var(--color-popover-foreground);
+  box-shadow: var(--shadow-sm);
+  font-family: var(--font-mono);
 }
 
 .bar:hover .bar-tooltip {

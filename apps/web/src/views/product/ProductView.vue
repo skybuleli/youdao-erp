@@ -58,8 +58,8 @@
           </div>
         </div>
         <div class="card-actions">
-          <button class="more-btn" @click="editProduct(product)">✏️</button>
-          <button class="more-btn delete" @click="deleteProduct(product)">🗑️</button>
+          <button class="more-btn" @click="editProduct(product)"><Icon name="Pencil" class="w-4 h-4" /></button>
+          <button class="more-btn delete" @click="deleteProduct(product)"><Icon name="Trash2" class="w-4 h-4" /></button>
         </div>
       </div>
     </div>
@@ -69,7 +69,7 @@
       <div class="modal-panel">
         <div class="modal-header">
           <h3>{{ editingProduct ? '编辑商品' : '新增商品' }}</h3>
-          <button class="close-btn" @click="showAddModal = false">✕</button>
+          <button class="close-btn" @click="showAddModal = false"><Icon name="X" class="w-4 h-4" /></button>
         </div>
         <div class="modal-body">
           <div class="form-group">
@@ -131,6 +131,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, watch, computed } from 'vue'
+import Icon from '@/components/Icon.vue'
 import { productApi, partnerApi } from '@/api'
 import { useToastStore } from '@/stores/toast'
 import type { Product } from '@/api/product'
@@ -156,7 +157,7 @@ const categories = [
 ]
 
 const iconMap: Record<number, string> = {
-  1: '🥤', 2: '🍪', 3: '🍚', 4: '🧴', 5: '📦'
+  1: 'Coffee', 2: 'Cookie', 3: 'Wheat', 4: 'Droplets', 5: 'Package'
 }
 
 const filteredProducts = computed(() => {
@@ -173,7 +174,7 @@ const filteredProducts = computed(() => {
     supplierName: p.supplierName,
     stock: p.stockQty,
     minStock: p.minStock,
-    icon: iconMap[p.categoryId ?? 5] || '📦'
+    icon: iconMap[p.categoryId ?? 5] || 'Package'
   }))
 })
 

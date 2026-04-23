@@ -40,7 +40,7 @@
         </div>
         <div class="partner-details">
           <div class="detail-item">
-            <span class="detail-label">👤 联系人</span>
+            <span class="detail-label"><Icon name="User" class="w-4 h-4" /> 联系人</span>
             <span>{{ partner.contact }}</span>
           </div>
           <div class="detail-item">
@@ -54,9 +54,9 @@
         </div>
         <div class="partner-actions">
           <button class="action-btn" @click="callPartner(partner.phone)">📞 打电话</button>
-          <button class="action-btn" @click="openDetail(partner)">📦 供应商品</button>
-          <button class="action-btn primary" @click="editPartner(partner)">✏️ 编辑</button>
-          <button class="action-btn danger" @click="deletePartner(partner)">🗑️ 删除</button>
+          <button class="action-btn" @click="openDetail(partner)"><Icon name="Package" class="w-5 h-5" /> 供应商品</button>
+          <button class="action-btn primary" @click="editPartner(partner)"><Icon name="Pencil" class="w-4 h-4" /> 编辑</button>
+          <button class="action-btn danger" @click="deletePartner(partner)"><Icon name="Trash2" class="w-4 h-4" /> 删除</button>
         </div>
       </div>
     </div>
@@ -71,7 +71,7 @@
       <div class="modal-panel">
         <div class="modal-header">
           <h3>{{ editingPartner ? '编辑往来单位' : '新增往来单位' }}</h3>
-          <button class="close-btn" @click="showAddModal = false">✕</button>
+          <button class="close-btn" @click="showAddModal = false"><Icon name="X" class="w-4 h-4" /></button>
         </div>
         <div class="modal-body">
           <div class="form-group">
@@ -116,12 +116,12 @@
     <div v-if="showDetailModal" class="modal-overlay" @click.self="showDetailModal = false">
       <div class="modal-panel">
         <div class="modal-header">
-          <h3>📦 {{ detailPartner?.name }} — 供应商品</h3>
-          <button class="close-btn" @click="showDetailModal = false">✕</button>
+          <h3><Icon name="Package" class="w-5 h-5" /> {{ detailPartner?.name }} — 供应商品</h3>
+          <button class="close-btn" @click="showDetailModal = false"><Icon name="X" class="w-4 h-4" /></button>
         </div>
         <div class="modal-body">
           <div v-if="detailProducts.length === 0" class="empty-state">
-            <span class="empty-icon">📦</span>
+            <span class="empty-icon"><Icon name="Package" class="w-5 h-5" /></span>
             <span>该供应商暂无商品</span>
           </div>
           <div v-else class="detail-product-list">
@@ -146,6 +146,7 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, watch } from 'vue'
+import Icon from '@/components/Icon.vue'
 import { partnerApi, productApi } from '@/api'
 import { useToastStore } from '@/stores/toast'
 
