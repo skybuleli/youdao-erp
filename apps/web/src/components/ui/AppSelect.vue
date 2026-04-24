@@ -1,6 +1,7 @@
 <template>
   <div class="relative">
     <select
+      v-model="modelValue"
       :class="cn(
         'flex h-10 w-full rounded-lg border border-[var(--color-input)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-foreground)] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 appearance-none',
         $props.class
@@ -22,4 +23,6 @@ interface Props {
 }
 
 defineProps<Props>()
+
+const modelValue = defineModel<string | number | null>()
 </script>
