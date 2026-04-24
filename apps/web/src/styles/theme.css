@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  /* shadcn Zinc color scale - Dark first */
+  /* ===== CORE COLORS ===== */
+  /* shadcn Zinc scale */
   --color-background: #09090b;
   --color-foreground: #fafafa;
 
@@ -28,8 +29,29 @@
 
   --color-border: rgba(255, 255, 255, 0.08);
   --color-input: rgba(255, 255, 255, 0.08);
-  --color-ring: #d4d4d8;
+  --color-ring: #3b82f6;
 
+  /* ===== BRAND COLORS ===== */
+  /* New modern blue palette */
+  --color-brand: #0072F5;
+  --color-brand-foreground: #ffffff;
+  --color-brand-muted: rgba(0, 114, 245, 0.15);
+  --color-brand-border: rgba(0, 114, 245, 0.3);
+
+  --color-brand-secondary: #00D4FF;
+  --color-brand-gradient: linear-gradient(135deg, #0072F5 0%, #00D4FF 100%);
+
+  /* ===== FUNCTIONAL COLORS ===== */
+  --color-success: #22c55e;
+  --color-success-muted: rgba(34, 197, 94, 0.15);
+  --color-warning: #f59e0b;
+  --color-warning-muted: rgba(245, 158, 11, 0.15);
+  --color-danger: #ef4444;
+  --color-danger-muted: rgba(239, 68, 68, 0.15);
+  --color-info: #3b82f6;
+  --color-info-muted: rgba(59, 130, 246, 0.15);
+
+  /* ===== SIDEBAR ===== */
   --color-sidebar-background: #09090b;
   --color-sidebar-foreground: #fafafa;
   --color-sidebar-primary: #fafafa;
@@ -37,30 +59,14 @@
   --color-sidebar-accent: #27272a;
   --color-sidebar-accent-foreground: #fafafa;
   --color-sidebar-border: rgba(255, 255, 255, 0.08);
-  --color-sidebar-ring: #d4d4d8;
+  --color-sidebar-ring: #3b82f6;
 
-  /* Custom brand accent - refined violet */
-  --color-brand: #7c5cfc;
-  --color-brand-foreground: #ffffff;
-  --color-brand-muted: rgba(124, 92, 252, 0.12);
-  --color-brand-border: rgba(124, 92, 252, 0.25);
-
-  /* Functional colors */
-  --color-success: #22c55e;
-  --color-success-muted: rgba(34, 197, 94, 0.12);
-  --color-warning: #f59e0b;
-  --color-warning-muted: rgba(245, 158, 11, 0.12);
-  --color-danger: #ef4444;
-  --color-danger-muted: rgba(239, 68, 68, 0.12);
-  --color-info: #3b82f6;
-  --color-info-muted: rgba(59, 130, 246, 0.12);
-
-  /* Typography */
+  /* ===== TYPOGRAPHY ===== */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --font-display: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 
-  /* Spacing scale */
+  /* ===== SPACING ===== */
   --spacing-px: 1px;
   --spacing-0: 0px;
   --spacing-0\.5: 0.125rem;
@@ -80,7 +86,7 @@
   --spacing-11: 2.75rem;
   --spacing-12: 3rem;
 
-  /* Radius - Apple-esque */
+  /* ===== RADIUS ===== */
   --radius-none: 0px;
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
@@ -90,7 +96,7 @@
   --radius-3xl: 1.5rem;
   --radius-full: 9999px;
 
-  /* Shadows - minimal, elevation-based */
+  /* ===== SHADOWS ===== */
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
   --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
@@ -98,10 +104,10 @@
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
   --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
   --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.3);
-  --shadow-glow: 0 0 20px rgba(124, 92, 252, 0.15);
+  --shadow-glow: 0 0 20px rgba(0, 114, 245, 0.2);
 }
 
-/* Light mode overrides */
+/* ===== LIGHT MODE ===== */
 @layer base {
   [data-theme="light"] {
     --color-background: #ffffff;
@@ -141,10 +147,13 @@
     --color-sidebar-border: rgba(0, 0, 0, 0.08);
     --color-sidebar-ring: #18181b;
 
-    --color-brand: #6b4fd9;
+    --color-brand: #006FEE;
     --color-brand-foreground: #ffffff;
-    --color-brand-muted: rgba(107, 79, 217, 0.08);
-    --color-brand-border: rgba(107, 79, 217, 0.2);
+    --color-brand-muted: rgba(0, 111, 238, 0.1);
+    --color-brand-border: rgba(0, 111, 238, 0.25);
+
+    --color-brand-secondary: #06B6D4;
+    --color-brand-gradient: linear-gradient(135deg, #006FEE 0%, #06B6D4 100%);
 
     --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
@@ -153,11 +162,11 @@
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
     --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
     --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.05);
-    --shadow-glow: 0 0 20px rgba(107, 79, 217, 0.1);
+    --shadow-glow: 0 0 20px rgba(0, 111, 238, 0.15);
   }
 }
 
-/* Legacy CSS variable bridge for gradual migration */
+/* ===== LEGACY VARIABLE BRIDGE ===== */
 @layer base {
   :root {
     --bg-base: var(--color-background);
@@ -167,8 +176,8 @@
     --bg-active: var(--color-muted);
 
     --accent-primary: var(--color-brand);
-    --accent-secondary: #5b8def;
-    --accent-hover: #9173fd;
+    --accent-secondary: var(--color-brand-secondary);
+    --accent-hover: #005BD1;
     --accent-subtle: var(--color-brand-muted);
     --accent-border: var(--color-brand-border);
 

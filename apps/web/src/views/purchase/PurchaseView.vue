@@ -1,72 +1,68 @@
 <template>
-  <div class="purchase-view">
+  <div class="flex flex-col gap-4">
     <!-- Stats -->
-    <div class="stats-row">
-      <div class="stat-item">
-        <span class="stat-label">本月采购</span>
-        <span class="stat-value amount gradient-text">¥{{ formatNumber(monthTotal) }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">采购单数</span>
-        <span class="stat-value amount">{{ orders.length }}</span>
-      </div>
+    <div class="grid grid-cols-2 gap-3">
+      <AppCard class="p-4 flex flex-col gap-1">
+        <span class="text-xs text-[var(--color-muted-foreground)]">本月采购</span>
+        <span class="text-2xl font-bold gradient-text font-[var(--font-mono)]">¥{{ formatNumber(monthTotal) }}</span>
+      </AppCard>
+      <AppCard class="p-4 flex flex-col gap-1">
+        <span class="text-xs text-[var(--color-muted-foreground)]">采购单数</span>
+        <span class="text-2xl font-bold font-[var(--font-mono)]">{{ orders.length }}</span>
+      </AppCard>
     </div>
 
     <!-- Toolbar -->
-    <div class="toolbar">
-      <div class="filter-group">
-        <select v-model="statusFilter" class="kimi-select">
-          <option value="all">全部状态</option>
-          <option value="pending">待入库</option>
-          <option value="partial">部分入库</option>
-          <option value="completed">已完成</option>
-        </select>
-      </div>
-      <router-link to="/purchase/new" class="btn-primary">
-        <span>➕ 新增采购单</span>
-      </router-link>
+    <div class="flex gap-3 items-center">
+      <AppSelect v-model="statusFilter" class="flex-1">
+        <option value="all">全部状态</option>
+        <option value="pending">待入库</option>
+        <option value="partial">部分入库</option>
+        <option value="completed">已完成</option>
+      </AppSelect>
+      <AppButton as-child>
+        <router-link to="/purchase/new" class="flex items-center gap-1">
+          <Plus class="h-4 w-4" /> 新增采购单
+        </router-link>
+      </AppButton>
     </div>
 
-    <!-- Loading -->
-    <div v-if="loading" class="loading-state">加载中...</div>
+    <AppLoading v-if="loading" />
 
-    <!-- Order List -->
-    <div v-else class="order-list">
-      <div v-for="order in filteredOrders" :key="order.id" class="order-card">
-        <div class="order-header">
-          <div class="order-no">{{ order.no }}</div>
-          <div class="order-status" :class="order.status">{{ statusText(order.status) }}</div>
+    <div v-else class="flex flex-col gap-3">
+      <AppCard v-for="order in filteredOrders" :key="order.id" hoverable class="p-4">
+        <div class="flex justify-between items-center mb-3">
+          <span class="text-sm font-semibold font-[var(--font-mono)]">{{ order.no }}</span>
+          <AppBadge :variant="statusVariant(order.status)">{{ statusText(order.status) }}</AppBadge>
         </div>
-        <div class="order-body">
-          <div class="order-supplier">
-            <span class="label">供应商</span>
-            <span class="value">{{ order.supplier }}</span>
+        <div class="flex flex-col gap-2 py-3 border-t border-b border-[var(--color-border)] mb-3 text-sm">
+          <div class="flex gap-2">
+            <span class="text-[var(--color-muted-foreground)] text-xs">供应商</span>
+            <span class="font-medium">{{ order.supplier }}</span>
           </div>
-          <div class="order-items-preview">
-            <span class="label">商品</span>
-            <span class="value">{{ order.items.map(i => i.name).join('、') }}</span>
+          <div class="flex gap-2">
+            <span class="text-[var(--color-muted-foreground)] text-xs">商品</span>
+            <span class="truncate">{{ order.items.map((i: any) => i.name).join('、') }}</span>
           </div>
-          <div class="order-meta">
-            <div>
-              <span class="label">数量</span>
-              <span class="value amount">{{ order.totalQty }} 件</span>
+          <div class="flex justify-between mt-1">
+            <div class="flex gap-2">
+              <span class="text-[var(--color-muted-foreground)] text-xs">数量</span>
+              <span class="font-medium font-[var(--font-mono)]">{{ order.totalQty }} 件</span>
             </div>
-            <div>
-              <span class="label">金额</span>
-              <span class="value amount" style="color: #7C5CFC;">¥{{ order.totalAmount.toFixed(2) }}</span>
+            <div class="flex gap-2">
+              <span class="text-[var(--color-muted-foreground)] text-xs">金额</span>
+              <span class="font-medium font-[var(--font-mono)] text-[var(--color-brand)]">¥{{ order.totalAmount.toFixed(2) }}</span>
             </div>
           </div>
         </div>
-        <div class="order-footer">
-          <span class="order-date">{{ order.date }}</span>
-          <div class="order-actions">
-            <button v-if="order.status !== 'completed'" class="action-btn primary" @click="receiveOrder(order)">
-              入库
-            </button>
-            <button class="action-btn" @click="viewDetail(order)">详情</button>
+        <div class="flex justify-between items-center">
+          <span class="text-xs text-[var(--color-muted-foreground)]">{{ order.date }}</span>
+          <div class="flex gap-2">
+            <AppButton v-if="order.status !== 'completed'" size="sm" @click="receiveOrder(order)">入库</AppButton>
+            <AppButton variant="secondary" size="sm" @click="viewDetail(order)">详情</AppButton>
           </div>
         </div>
-      </div>
+      </AppCard>
     </div>
   </div>
 </template>
@@ -75,10 +71,12 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { orderApi, partnerApi } from '@/api'
 import { useToastStore } from '@/stores/toast'
+import { Plus } from 'lucide-vue-next'
+import { AppButton, AppCard, AppSelect, AppBadge, AppLoading } from '@/components/ui'
 
 const toast = useToastStore()
 const statusFilter = ref('all')
-const orders = ref<Array<{ id: number; no: string; status: string; supplier: string; items: Array<{ name: string }>; totalQty: number; totalAmount: number; date: string }>>([])
+const orders = ref<any[]>([])
 const partnerMap = ref<Map<number, string>>(new Map())
 const loading = ref(false)
 
@@ -94,14 +92,9 @@ async function loadPartners() {
 async function loadData() {
   loading.value = true
   try {
-    const res = await orderApi.list({
-      type: 'purchase',
-      status: statusFilter.value !== 'all' ? statusFilter.value : undefined
-    })
+    const res = await orderApi.list({ type: 'purchase', status: statusFilter.value !== 'all' ? statusFilter.value : undefined })
     orders.value = res.data.map((o: any) => ({
-      id: o.id,
-      no: o.orderNo,
-      status: o.status,
+      id: o.id, no: o.orderNo, status: o.status,
       supplier: partnerMap.value.get(o.partnerId) || `往来单位#${o.partnerId}`,
       items: (o.items || []).map((i: any) => ({ name: `商品#${i.productId}` })),
       totalQty: (o.items || []).reduce((sum: number, i: any) => sum + i.qty, 0),
@@ -116,19 +109,16 @@ async function loadData() {
 }
 
 const monthTotal = computed(() => orders.value.reduce((sum, o) => sum + o.totalAmount, 0))
-
-const filteredOrders = computed(() => {
-  if (statusFilter.value === 'all') return orders.value
-  return orders.value.filter(o => o.status === statusFilter.value)
-})
+const filteredOrders = computed(() => statusFilter.value === 'all' ? orders.value : orders.value.filter(o => o.status === statusFilter.value))
 
 function statusText(status: string) {
-  const map: Record<string, string> = {
-    pending: '待入库',
-    partial: '部分入库',
-    completed: '已完成'
-  }
+  const map: Record<string, string> = { pending: '待入库', partial: '部分入库', completed: '已完成' }
   return map[status] || status
+}
+
+function statusVariant(status: string) {
+  const map: Record<string, any> = { pending: 'warning', partial: 'info', completed: 'success' }
+  return map[status] || 'default'
 }
 
 function formatNumber(n: number) {
@@ -151,208 +141,8 @@ function viewDetail(order: any) {
 }
 
 watch(statusFilter, loadData)
-
 onMounted(async () => {
   await loadPartners()
   await loadData()
 })
 </script>
-
-<style scoped>
-.purchase-view {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.stats-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.stat-item {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.stat-label {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: 700;
-}
-
-.toolbar {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.filter-group {
-  flex: 1;
-}
-
-.kimi-select {
-  width: 100%;
-  height: 44px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 0 12px;
-  color: var(--text-primary);
-  font-size: 14px;
-}
-
-.btn-primary {
-  height: 44px;
-  padding: 0 16px;
-  background: var(--accent-primary);
-  border: none;
-  border-radius: var(--radius-md);
-  color: white;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-  text-decoration: none;
-  
-}
-
-.order-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.order-card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  transition: all 0.2s;
-}
-
-.order-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-card);
-}
-
-.order-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.order-no {
-  font-size: 14px;
-  font-weight: 600;
-  font-family: monospace;
-}
-
-.order-status {
-  font-size: 12px;
-  padding: 2px 10px;
-  border-radius: var(--radius-full);
-}
-
-.order-status.pending {
-  background: rgba(245, 158, 11, 0.15);
-  color: var(--color-warning);
-}
-
-.order-status.partial {
-  background: rgba(59, 130, 246, 0.15);
-  color: var(--color-info);
-}
-
-.order-status.completed {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--color-success);
-}
-
-.order-body {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px 0;
-  border-top: 1px solid var(--border-subtle);
-  border-bottom: 1px solid var(--border-subtle);
-  margin-bottom: 12px;
-}
-
-.order-supplier,
-.order-items-preview {
-  display: flex;
-  gap: 8px;
-  font-size: 14px;
-}
-
-.order-meta {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 4px;
-}
-
-.label {
-  color: var(--text-tertiary);
-  font-size: 13px;
-}
-
-.value {
-  font-weight: 500;
-}
-
-.order-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.order-date {
-  font-size: 13px;
-  color: var(--text-tertiary);
-}
-
-.order-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.action-btn {
-  height: 36px;
-  padding: 0 14px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  font-size: 13px;
-  cursor: pointer;
-}
-
-@media (max-width: 640px) {
-  .action-btn {
-    min-height: 44px;
-    padding: 0 18px;
-    font-size: 14px;
-  }
-}
-
-.action-btn.primary {
-  background: var(--gradient-subtle);
-  border-color: #7C5CFC;
-  color: var(--text-primary);
-}
-</style>

@@ -1,66 +1,51 @@
 <template>
-  <div class="login-container">
-    <div class="login-card">
-      <div class="logo">
-        <div class="logo-icon">
-          <Layers class="w-6 h-6 text-white" />
+  <div class="min-h-screen flex items-center justify-center bg-[var(--color-background)] p-6 relative overflow-hidden">
+    <!-- Background decoration -->
+    <div class="absolute inset-0 pointer-events-none">
+      <div class="absolute w-[400px] h-[400px] rounded-full blur-[80px] opacity-15 bg-[var(--color-brand)] -top-[100px] -right-[100px]" />
+      <div class="absolute w-[300px] h-[300px] rounded-full blur-[80px] opacity-15 bg-[var(--color-brand-secondary)] -bottom-[50px] -left-[50px]" />
+    </div>
+
+    <AppCard class="relative z-[1] w-full max-w-[400px] p-8 md:p-10">
+      <div class="flex flex-col items-center gap-3 mb-8">
+        <div class="w-12 h-12 rounded-xl flex items-center justify-center" style="background: var(--color-brand-gradient)">
+          <Layers class="h-6 w-6 text-white" />
         </div>
-        <h1 class="gradient-text">有道ERP</h1>
-        <p class="subtitle">智能进销存管理系统</p>
+        <h1 class="text-[1.75rem] font-extrabold tracking-tight gradient-text">有道ERP</h1>
+        <p class="text-sm text-[var(--color-muted-foreground)] font-medium">智能进销存管理系统</p>
       </div>
 
-      <form @submit.prevent="handleLogin" class="login-form">
-        <div class="form-group">
-          <label>用户名</label>
-          <div class="input-wrapper">
-            <User class="input-icon" />
-            <input
-              v-model="form.username"
-              type="text"
-              class="input"
-              placeholder="请输入用户名"
-              required
-            />
+      <form @submit.prevent="handleLogin" class="flex flex-col gap-5">
+        <AppFormGroup label="用户名">
+          <div class="relative">
+            <User class="absolute left-3 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-[var(--color-muted-foreground)] pointer-events-none" />
+            <AppInput v-model="form.username" class="pl-10" placeholder="请输入用户名" required />
           </div>
-        </div>
+        </AppFormGroup>
 
-        <div class="form-group">
-          <label>密码</label>
-          <div class="input-wrapper">
-            <Lock class="input-icon" />
-            <input
-              v-model="form.password"
-              type="password"
-              class="input"
-              placeholder="请输入密码"
-              required
-            />
+        <AppFormGroup label="密码">
+          <div class="relative">
+            <Lock class="absolute left-3 top-1/2 -translate-y-1/2 h-[18px] w-[18px] text-[var(--color-muted-foreground)] pointer-events-none" />
+            <AppInput v-model="form.password" type="password" class="pl-10" placeholder="请输入密码" required />
           </div>
-        </div>
+        </AppFormGroup>
 
-        <div v-if="error" class="error-message">
-          <AlertCircle class="w-4 h-4" />
+        <div v-if="error" class="flex items-center gap-2 p-3 rounded-lg bg-[var(--color-danger-muted)] text-[var(--color-danger)] text-[13px] font-medium">
+          <AlertCircle class="h-4 w-4 flex-shrink-0" />
           {{ error }}
         </div>
 
-        <button type="submit" class="btn-login" :disabled="authStore.loading">
-          <Loader2 v-if="authStore.loading" class="w-4 h-4 animate-spin" />
+        <AppButton type="submit" class="w-full h-11" :loading="authStore.loading">
           <span v-if="authStore.loading">登录中...</span>
           <span v-else>登录</span>
-        </button>
+        </AppButton>
       </form>
 
-      <p class="hint">
-        <Info class="w-3 h-3" />
+      <p class="flex items-center justify-center gap-1 mt-5 text-xs text-[var(--color-muted-foreground)]">
+        <Info class="h-3 w-3" />
         默认账号: admin / 密码: admin123
       </p>
-    </div>
-
-    <!-- Background decoration -->
-    <div class="bg-decoration">
-      <div class="bg-orb orb-1"></div>
-      <div class="bg-orb orb-2"></div>
-    </div>
+    </AppCard>
   </div>
 </template>
 
@@ -68,14 +53,8 @@
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import {
-  Layers,
-  User,
-  Lock,
-  AlertCircle,
-  Loader2,
-  Info
-} from 'lucide-vue-next'
+import { Layers, User, Lock, AlertCircle, Info } from 'lucide-vue-next'
+import { AppCard, AppButton, AppInput, AppFormGroup } from '@/components/ui'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -97,208 +76,3 @@ async function handleLogin() {
   }
 }
 </script>
-
-<style scoped>
-.login-container {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-background);
-  padding: 1.5rem;
-  position: relative;
-  overflow: hidden;
-}
-
-.bg-decoration {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.bg-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.15;
-}
-
-.orb-1 {
-  width: 400px;
-  height: 400px;
-  background: var(--color-brand);
-  top: -100px;
-  right: -100px;
-}
-
-.orb-2 {
-  width: 300px;
-  height: 300px;
-  background: #5b8def;
-  bottom: -50px;
-  left: -50px;
-}
-
-.login-card {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 400px;
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-2xl);
-  padding: 2.5rem;
-  box-shadow: var(--shadow-xl);
-}
-
-.logo {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 2rem;
-}
-
-.logo-icon {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #7c5cfc 0%, #5b8def 100%);
-  border-radius: var(--radius-xl);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.logo h1 {
-  font-size: 1.75rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.subtitle {
-  font-size: 0.875rem;
-  color: var(--color-muted-foreground);
-  font-weight: 500;
-}
-
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.form-group label {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--color-foreground);
-}
-
-.input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.input-icon {
-  position: absolute;
-  left: 0.75rem;
-  width: 18px;
-  height: 18px;
-  color: var(--color-muted-foreground);
-  pointer-events: none;
-}
-
-.input-wrapper .input {
-  padding-left: 2.5rem;
-}
-
-.input {
-  display: flex;
-  width: 100%;
-  height: 2.75rem;
-  padding: 0 0.75rem;
-  padding-left: 2.5rem;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  background: var(--color-background);
-  color: var(--color-foreground);
-  border: 1px solid var(--color-input);
-  border-radius: var(--radius-lg);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  outline: none;
-}
-
-.input:focus {
-  border-color: var(--color-ring);
-  box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.1);
-}
-
-.input::placeholder {
-  color: var(--color-muted-foreground);
-}
-
-.error-message {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  background: var(--color-danger-muted);
-  color: var(--color-danger);
-  border-radius: var(--radius-md);
-  font-size: 0.8125rem;
-  font-weight: 500;
-}
-
-.btn-login {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  height: 2.75rem;
-  padding: 0 1rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: white;
-  background: linear-gradient(135deg, #7c5cfc 0%, #5b8def 100%);
-  border: none;
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-.btn-login:hover:not(:disabled) {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-
-.btn-login:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.hint {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.375rem;
-  margin-top: 1.25rem;
-  font-size: 0.75rem;
-  color: var(--color-muted-foreground);
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-</style>

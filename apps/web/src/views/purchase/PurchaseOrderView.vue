@@ -1,213 +1,171 @@
 <template>
-  <div class="purchase-order-view">
+  <div class="flex flex-col gap-3 pb-24">
     <!-- Header -->
-    <div class="page-header">
-      <button class="back-btn" @click="$router.back()">←</button>
-      <h2>新增采购单</h2>
-      <button class="save-draft-btn">保存草稿</button>
+    <div class="flex items-center gap-3 mb-1">
+      <AppButton variant="ghost" size="icon-sm" @click="$router.back()">
+        <ChevronLeft class="h-5 w-5" />
+      </AppButton>
+      <h2 class="text-xl font-semibold flex-1">新增采购单</h2>
     </div>
 
-    <!-- Supplier & Warehouse -->
-    <div class="info-card">
-      <div class="form-row">
-        <div class="form-group">
-          <label>供应商 <span style="color: var(--color-danger)">*</span></label>
-          <select v-model.number="form.supplierId" class="kimi-select" @change="onSupplierChange">
+    <!-- Info Card -->
+    <AppCard class="p-4">
+      <div class="grid grid-cols-2 gap-3">
+        <AppFormGroup label="供应商" required>
+          <AppSelect v-model.number="form.supplierId" @change="onSupplierChange">
             <option :value="null">选择供应商</option>
             <option v-for="s in suppliers" :key="s.id" :value="s.id">{{ s.name }}</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>入库仓库</label>
-          <select v-model="form.warehouse" class="kimi-select">
+          </AppSelect>
+        </AppFormGroup>
+        <AppFormGroup label="入库仓库">
+          <AppSelect v-model="form.warehouse">
             <option>总仓</option>
             <option>分仓A</option>
-          </select>
-        </div>
+          </AppSelect>
+        </AppFormGroup>
       </div>
-    </div>
+    </AppCard>
 
     <!-- Product Selection -->
-    <div class="product-section">
-      <div class="section-title">
-        <span>采购商品</span>
-        <button class="add-btn" :disabled="!form.supplierId" @click="showProductPicker = true">➕ 添加商品</button>
+    <AppCard class="p-4">
+      <div class="flex justify-between items-center mb-3">
+        <span class="font-semibold">采购商品</span>
+        <AppButton size="sm" :disabled="!form.supplierId" @click="showProductPicker = true">
+          <Plus class="h-4 w-4" /> 添加商品
+        </AppButton>
       </div>
-
-      <div v-if="items.length === 0" class="empty-state">
-        <span class="empty-icon"><Icon name="Package" class="w-5 h-5" /></span>
-        <span>点击添加商品开始采购</span>
-      </div>
-
-      <div v-else class="item-list">
-        <div v-for="(item, index) in items" :key="index" class="item-row">
-          <div class="item-info">
-            <div class="item-name">{{ item.name }}</div>
-            <div class="item-spec">{{ item.spec }} | 库存 {{ item.stock }}</div>
+      <AppEmpty v-if="items.length === 0" message="点击添加商品开始采购" />
+      <div v-else class="flex flex-col gap-3">
+        <AppCard v-for="(item, index) in items" :key="index" class="p-3 relative">
+          <AppButton variant="ghost" size="icon-sm" class="absolute right-2 top-2 text-[var(--color-danger)]" @click="removeItem(index)">
+            <X class="h-4 w-4" />
+          </AppButton>
+          <div class="mb-2">
+            <div class="font-medium text-sm">{{ item.name }}</div>
+            <div class="text-xs text-[var(--color-muted-foreground)]">{{ item.spec }} | 库存 {{ item.stock }}</div>
           </div>
-          <div class="item-inputs">
-            <div class="input-group">
-              <label>单价</label>
-              <input v-model.number="item.price" type="number" class="kimi-input small" />
-            </div>
-            <div class="input-group">
-              <label>数量</label>
-              <div class="qty-control">
-                <button class="qty-btn" @click="decreaseQty(index)">−</button>
-                <input v-model.number="item.qty" type="number" class="kimi-input small qty-input" />
-                <button class="qty-btn" @click="increaseQty(index)">+</button>
+          <div class="flex items-end gap-3">
+            <AppFormGroup label="单价" class="w-20">
+              <AppInput v-model.number="item.price" type="number" class="text-center" />
+            </AppFormGroup>
+            <AppFormGroup label="数量" class="w-28">
+              <div class="flex items-center gap-1">
+                <AppButton variant="secondary" size="icon-sm" @click="decreaseQty(index)"><Minus class="h-3 w-3" /></AppButton>
+                <AppInput v-model.number="item.qty" type="number" class="text-center" />
+                <AppButton variant="secondary" size="icon-sm" @click="increaseQty(index)"><Plus class="h-3 w-3" /></AppButton>
               </div>
-            </div>
-            <div class="input-group">
-              <label>小计</label>
-              <span class="subtotal amount">¥{{ (item.price * item.qty).toFixed(2) }}</span>
+            </AppFormGroup>
+            <div class="flex-1 text-right">
+              <div class="text-xs text-[var(--color-muted-foreground)]">小计</div>
+              <div class="font-semibold font-[var(--font-mono)]">¥{{ (item.price * item.qty).toFixed(2) }}</div>
             </div>
           </div>
-          <button class="remove-btn" @click="removeItem(index)"><Icon name="X" class="w-4 h-4" /></button>
-        </div>
+        </AppCard>
       </div>
-    </div>
+    </AppCard>
 
     <!-- Summary -->
-    <div v-if="items.length > 0" class="summary-card">
-      <div class="summary-row">
-        <span>商品种类</span>
-        <span class="amount">{{ items.length }}</span>
-      </div>
-      <div class="summary-row">
-        <span>总数量</span>
-        <span class="amount">{{ totalQty }}</span>
-      </div>
-      <div class="summary-row">
-        <span>合计金额</span>
-        <span class="amount gradient-text">¥{{ totalAmount.toFixed(2) }}</span>
-      </div>
-      <div class="summary-row">
+    <AppCard v-if="items.length > 0" class="p-4 flex flex-col gap-2.5">
+      <div class="flex justify-between text-sm"><span>商品种类</span><span class="font-[var(--font-mono)]">{{ items.length }}</span></div>
+      <div class="flex justify-between text-sm"><span>总数量</span><span class="font-[var(--font-mono)]">{{ totalQty }}</span></div>
+      <div class="flex justify-between text-sm"><span>合计金额</span><span class="font-semibold gradient-text font-[var(--font-mono)]">¥{{ totalAmount.toFixed(2) }}</span></div>
+      <div class="flex justify-between items-center text-sm">
         <span>优惠</span>
-        <input v-model.number="form.discount" type="number" class="kimi-input small" placeholder="0.00" />
+        <AppInput v-model.number="form.discount" type="number" class="w-28 text-right" placeholder="0.00" />
       </div>
-      <div class="summary-row total">
-        <span>应付金额</span>
-        <span class="amount gradient-text" style="font-size: 24px;">¥{{ payableAmount.toFixed(2) }}</span>
+      <div class="flex justify-between items-center pt-2 border-t border-[var(--color-border)]">
+        <span class="font-semibold">应付金额</span>
+        <span class="text-2xl font-bold gradient-text font-[var(--font-mono)]">¥{{ payableAmount.toFixed(2) }}</span>
       </div>
-    </div>
+    </AppCard>
 
     <!-- Notes -->
-    <div class="info-card">
-      <div class="form-group">
-        <label>备注</label>
-        <textarea v-model="form.remark" class="kimi-textarea" rows="2" placeholder="输入采购备注..."></textarea>
+    <AppCard class="p-4">
+      <AppFormGroup label="备注">
+        <textarea v-model="form.remark" rows="2" class="flex w-full rounded-lg border border-[var(--color-input)] bg-[var(--color-background)] px-3 py-2 text-sm text-[var(--color-foreground)] placeholder:text-[var(--color-muted-foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] focus-visible:ring-offset-2 resize-none" placeholder="输入采购备注..." />
+      </AppFormGroup>
+    </AppCard>
+
+    <!-- Submit Bar -->
+    <div class="fixed bottom-0 left-0 right-0 bg-[var(--color-card)]/90 backdrop-blur-xl border-t border-[var(--color-border)] p-4 flex items-center justify-between z-50 md:static md:rounded-xl md:border md:bg-[var(--color-card)]">
+      <div class="flex flex-col">
+        <span class="text-xs text-[var(--color-muted-foreground)]">应付</span>
+        <span class="text-xl font-bold gradient-text font-[var(--font-mono)]">¥{{ payableAmount.toFixed(2) }}</span>
       </div>
+      <AppButton size="lg" @click="submitOrder">确认采购</AppButton>
     </div>
 
-    <!-- Submit -->
-    <div class="submit-bar">
-      <div class="submit-info">
-        <span class="submit-label">应付</span>
-        <span class="submit-amount amount gradient-text">¥{{ payableAmount.toFixed(2) }}</span>
+    <!-- Product Picker Sheet -->
+    <AppSheet :open="showProductPicker" @close="showProductPicker = false">
+      <div class="p-4 border-b border-[var(--color-border)] flex justify-between items-center">
+        <h3 class="font-semibold">选择商品</h3>
+        <AppButton variant="ghost" size="icon-sm" @click="showProductPicker = false">
+          <X class="h-4 w-4" />
+        </AppButton>
       </div>
-      <button class="btn-submit" @click="submitOrder">
-        <span>确认采购</span>
-      </button>
-    </div>
-
-    <!-- Product Picker Modal -->
-    <div v-if="showProductPicker" class="modal-overlay" @click.self="showProductPicker = false">
-      <div class="modal-panel">
-        <div class="modal-header">
-          <h3>选择商品</h3>
-          <button class="close-btn" @click="showProductPicker = false"><Icon name="X" class="w-4 h-4" /></button>
-        </div>
-        <div class="picker-search">
-          <span>🔍</span>
-          <input v-model="pickerQuery" class="kimi-input" placeholder="搜索商品..." />
-        </div>
-        <div class="picker-list">
-          <div
-            v-for="product in filteredPickerProducts"
-            :key="product.id"
-            class="picker-item"
-            @click="addItem(product)"
-          >
-            <span class="picker-icon"><Icon :name="product.icon" class="w-5 h-5" /></span>
-            <div class="picker-info">
-              <div class="picker-name">{{ product.name }}</div>
-              <div class="picker-price">进价 ¥{{ product.cost }} | 库存 {{ product.stock }}</div>
-            </div>
-            <span class="picker-add">➕</span>
+      <div class="p-4">
+        <AppSearch v-model="pickerQuery" placeholder="搜索商品..." />
+      </div>
+      <div class="px-4 pb-4 flex flex-col gap-2 max-h-[50vh] overflow-y-auto">
+        <AppCard
+          v-for="product in filteredPickerProducts"
+          :key="product.id"
+          clickable
+          class="p-3 flex items-center gap-3"
+          @click="addItem(product)"
+        >
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-[var(--color-secondary)] flex-shrink-0">
+            <Package class="h-5 w-5 text-[var(--color-brand)]" />
           </div>
-        </div>
+          <div class="flex-1 min-w-0">
+            <div class="font-medium text-sm">{{ product.name }}</div>
+            <div class="text-xs text-[var(--color-muted-foreground)]">进价 ¥{{ product.cost }} | 库存 {{ product.stock }}</div>
+          </div>
+          <Plus class="h-5 w-5 text-[var(--color-brand)]" />
+        </AppCard>
       </div>
-    </div>
+    </AppSheet>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted } from 'vue'
-import Icon from '@/components/Icon.vue'
 import { useRouter } from 'vue-router'
 import { productApi, orderApi, partnerApi } from '@/api'
 import { useToastStore } from '@/stores/toast'
+import { ChevronLeft, Plus, X, Minus, Package } from 'lucide-vue-next'
+import { AppButton, AppCard, AppInput, AppSelect, AppSearch, AppSheet, AppFormGroup, AppEmpty } from '@/components/ui'
 
 const router = useRouter()
 const toast = useToastStore()
 const showProductPicker = ref(false)
 const pickerQuery = ref('')
-const loading = ref(false)
 
-const form = reactive({
-  supplierId: null as number | null,
-  warehouse: '总仓',
-  discount: 0,
-  remark: ''
-})
-
+const form = reactive({ supplierId: null as number | null, warehouse: '总仓', discount: 0, remark: '' })
 const items = ref<Array<{ id: number; name: string; spec: string; price: number; qty: number; stock: number }>>([])
-
 const allProducts = ref<Array<any>>([])
 const suppliers = ref<Array<any>>([])
 
 async function loadData() {
-  loading.value = true
   try {
-    const [prodRes, partnerRes] = await Promise.all([
-      productApi.list(),
-      partnerApi.list({ type: 'supplier' })
-    ])
+    const [prodRes, partnerRes] = await Promise.all([productApi.list(), partnerApi.list({ type: 'supplier' })])
     allProducts.value = prodRes.data.map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      spec: p.specs || '',
-      cost: p.purchasePrice,
-      stock: p.stockQty,
-      supplierId: p.supplierId,
-      icon: 'Package'
+      id: p.id, name: p.name, spec: p.specs || '', cost: p.purchasePrice,
+      stock: p.stockQty, supplierId: p.supplierId, icon: 'Package'
     }))
     suppliers.value = partnerRes.data
   } catch (e: any) {
     toast.error(e.message || '加载失败')
-  } finally {
-    loading.value = false
   }
 }
 
 function onSupplierChange() {
-  // 切换供应商时清空已选商品
   items.value = []
 }
 
 const filteredPickerProducts = computed(() => {
-  let list = allProducts.value
-  // 严格过滤：只显示当前供应商的商品
-  if (form.supplierId) {
-    list = list.filter((p: any) => p.supplierId === form.supplierId)
-  } else {
-    list = []
-  }
-  if (pickerQuery.value) {
-    const q = pickerQuery.value.toLowerCase()
-    list = list.filter((p: any) => p.name.toLowerCase().includes(q))
-  }
+  let list = form.supplierId ? allProducts.value.filter((p: any) => p.supplierId === form.supplierId) : []
+  if (pickerQuery.value) list = list.filter((p: any) => p.name.toLowerCase().includes(pickerQuery.value.toLowerCase()))
   return list
 })
 
@@ -217,57 +175,25 @@ const payableAmount = computed(() => Math.max(0, totalAmount.value - form.discou
 
 function addItem(product: any) {
   const existing = items.value.find(i => i.id === product.id)
-  if (existing) {
-    existing.qty++
-  } else {
-    items.value.push({
-      id: product.id,
-      name: product.name,
-      spec: product.spec,
-      price: product.cost,
-      qty: 1,
-      stock: product.stock
-    })
-  }
+  if (existing) existing.qty++
+  else items.value.push({ id: product.id, name: product.name, spec: product.spec, price: product.cost, qty: 1, stock: product.stock })
   showProductPicker.value = false
 }
 
-function increaseQty(index: number) {
-  items.value[index].qty++
-}
-
+function increaseQty(index: number) { items.value[index].qty++ }
 function decreaseQty(index: number) {
-  if (items.value[index].qty > 1) {
-    items.value[index].qty--
-  } else {
-    removeItem(index)
-  }
+  if (items.value[index].qty > 1) items.value[index].qty--
+  else removeItem(index)
 }
-
-function removeItem(index: number) {
-  items.value.splice(index, 1)
-}
+function removeItem(index: number) { items.value.splice(index, 1) }
 
 async function submitOrder() {
-  if (!form.supplierId) {
-    toast.warning('请选择供应商')
-    return
-  }
-  if (items.value.length === 0) {
-    toast.warning('请添加采购商品')
-    return
-  }
+  if (!form.supplierId) { toast.warning('请选择供应商'); return }
+  if (items.value.length === 0) { toast.warning('请添加采购商品'); return }
   try {
     await orderApi.create({
-      type: 'purchase',
-      partnerId: form.supplierId,
-      discountAmount: form.discount,
-      remark: form.remark,
-      items: items.value.map(i => ({
-        productId: i.id,
-        qty: i.qty,
-        unitPrice: i.price
-      }))
+      type: 'purchase', partnerId: form.supplierId, discountAmount: form.discount, remark: form.remark,
+      items: items.value.map(i => ({ productId: i.id, qty: i.qty, unitPrice: i.price }))
     })
     toast.success('采购单提交成功！')
     router.push('/purchase')
@@ -278,443 +204,3 @@ async function submitOrder() {
 
 onMounted(loadData)
 </script>
-
-<style scoped>
-.purchase-order-view {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding-bottom: 100px;
-}
-
-.page-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 4px;
-}
-
-.back-btn {
-  width: 40px;
-  height: 40px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  font-size: 18px;
-  cursor: pointer;
-}
-
-.page-header h2 {
-  flex: 1;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.save-draft-btn {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.info-card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.form-group label {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.kimi-select,
-.kimi-input,
-.kimi-textarea {
-  height: 44px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 0 12px;
-  color: var(--text-primary);
-  font-size: 15px;
-  width: 100%;
-}
-
-.kimi-textarea {
-  height: auto;
-  padding: 12px;
-  resize: vertical;
-}
-
-.kimi-input.small {
-  height: 36px;
-  font-size: 14px;
-  width: 80px;
-  text-align: center;
-}
-
-.kimi-input:focus,
-.kimi-select:focus,
-.kimi-textarea:focus {
-  border-color: #7C5CFC;
-  outline: none;
-}
-
-.product-section {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-}
-
-.section-title {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  font-weight: 600;
-}
-
-.add-btn {
-  background: var(--gradient-subtle);
-  border: 1px solid #7C5CFC;
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  font-size: 13px;
-  padding: 6px 12px;
-  cursor: pointer;
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 40px;
-  color: var(--text-tertiary);
-}
-
-.empty-icon {
-  font-size: 48px;
-  opacity: 0.5;
-}
-
-.item-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.item-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px;
-  background: var(--bg-surface);
-  border-radius: var(--radius-md);
-  position: relative;
-}
-
-.item-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.item-name {
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 2px;
-}
-
-.item-spec {
-  font-size: 12px;
-  color: var(--text-tertiary);
-}
-
-.item-inputs {
-  display: flex;
-  gap: 12px;
-  align-items: flex-end;
-}
-
-.input-group {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.input-group label {
-  font-size: 11px;
-  color: var(--text-tertiary);
-}
-
-.qty-control {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.qty-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1px solid var(--border-medium);
-  background: var(--bg-elevated);
-  color: var(--text-primary);
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-@media (max-width: 640px) {
-  .qty-btn {
-    width: 44px;
-    height: 44px;
-    font-size: 18px;
-  }
-}
-
-.qty-input {
-  width: 50px !important;
-}
-
-.subtotal {
-  font-weight: 600;
-  min-width: 70px;
-  text-align: right;
-}
-
-.remove-btn {
-  position: absolute;
-  right: 8px;
-  top: 8px;
-  background: none;
-  border: none;
-  color: var(--color-danger);
-  font-size: 14px;
-  cursor: pointer;
-  opacity: 0.6;
-}
-
-.remove-btn:hover {
-  opacity: 1;
-}
-
-.summary-card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.summary-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
-}
-
-.summary-row.total {
-  padding-top: 10px;
-  border-top: 1px solid var(--border-subtle);
-  font-weight: 600;
-}
-
-.submit-bar {
-  position: fixed;
-  bottom: 64px;
-  left: 0;
-  right: 0;
-  background: var(--bg-elevated);
-  border-top: 1px solid var(--border-subtle);
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  z-index: 50;
-}
-
-@media (min-width: 1024px) {
-  .submit-bar {
-    position: static;
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border-subtle);
-    margin-top: 8px;
-  }
-}
-
-.submit-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.submit-label {
-  font-size: 12px;
-  color: var(--text-tertiary);
-}
-
-.submit-amount {
-  font-size: 22px;
-  font-weight: 700;
-}
-
-.btn-submit {
-  height: 48px;
-  padding: 0 32px;
-  background: var(--accent-primary);
-  border: none;
-  border-radius: var(--radius-md);
-  color: white;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  
-}
-
-.btn-submit:hover {
-  transform: translateY(-1px);
-  
-}
-
-.btn-submit:active {
-  transform: scale(0.97);
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  z-index: 300;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-
-@media (min-width: 768px) {
-  .modal-overlay {
-    align-items: center;
-  }
-}
-
-.modal-panel {
-  background: var(--bg-elevated);
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  width: 100%;
-  max-width: 480px;
-  max-height: 80vh;
-  overflow-y: auto;
-  animation: slide-up 0.3s ease-out;
-}
-
-@media (min-width: 768px) {
-  .modal-panel {
-    border-radius: var(--radius-xl);
-  }
-}
-
-@keyframes slide-up {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 20px;
-  cursor: pointer;
-}
-
-.picker-search {
-  padding: 12px 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.picker-search .kimi-input {
-  flex: 1;
-}
-
-.picker-list {
-  padding: 8px;
-}
-
-.picker-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.picker-item:hover {
-  background: var(--bg-surface);
-}
-
-.picker-icon {
-  width: 40px;
-  height: 40px;
-  background: var(--gradient-subtle);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  flex-shrink: 0;
-}
-
-.picker-info {
-  flex: 1;
-}
-
-.picker-name {
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.picker-price {
-  font-size: 12px;
-  color: var(--text-tertiary);
-}
-
-.picker-add {
-  font-size: 18px;
-  color: #7C5CFC;
-}
-</style>

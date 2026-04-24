@@ -1,139 +1,113 @@
 <template>
-  <div class="inventory-view">
-    <!-- Search -->
-    <div class="search-box">
-      <span class="search-icon">🔍</span>
-      <input v-model="searchQuery" class="kimi-input" placeholder="搜索商品名称、条码..." />
-    </div>
+  <div class="flex flex-col gap-4 pb-5">
+    <AppSearch v-model="searchQuery" placeholder="搜索商品名称、条码..." />
 
-    <!-- Supplier Filter -->
-    <div class="supplier-filter-row">
-      <select v-model.number="selectedSupplier" class="kimi-select supplier-select">
-        <option :value="null">全部供应商</option>
-        <option v-for="s in suppliers" :key="s.id" :value="s.id">{{ s.name }}</option>
-      </select>
-    </div>
+    <AppSelect v-model.number="selectedSupplier" class="max-w-[280px]">
+      <option :value="null">全部供应商</option>
+      <option v-for="s in suppliers" :key="s.id" :value="s.id">{{ s.name }}</option>
+    </AppSelect>
 
-    <!-- Filter Tabs -->
-    <div class="filter-tabs">
-      <button
-        v-for="tab in tabs"
-        :key="tab.value"
-        class="filter-tab"
-        :class="{ active: activeTab === tab.value }"
-        @click="activeTab = tab.value"
+    <AppTabs v-model="activeTab" :tabs="tabs" />
+
+    <AppLoading v-if="loading" />
+
+    <div v-else class="flex flex-col gap-3">
+      <AppCard
+        v-for="item in filteredItems"
+        :key="item.id"
+        hoverable
+        class="p-4"
+        :class="item.stock <= 0 ? 'border-[var(--color-danger)]/40' : item.stock <= item.minStock ? 'border-[var(--color-warning)]/30' : ''"
       >
-        {{ tab.label }}
-        <span v-if="tab.count !== undefined" class="tab-count">({{ tab.count }})</span>
-      </button>
-    </div>
-
-    <!-- Loading -->
-    <div v-if="loading" class="loading-state">加载中...</div>
-
-    <!-- Inventory List -->
-    <div v-else class="inventory-list">
-      <div v-for="item in filteredItems" :key="item.id" class="inventory-card" :class="stockClass(item)">
-        <div class="item-header">
-          <div class="item-icon"><Icon :name="item.icon" class="w-5 h-5" /></div>
-          <div class="item-info">
-            <div class="item-name">{{ item.name }}</div>
-            <div class="item-code">{{ item.code }} | 供应商: {{ item.supplierName || '-' }}</div>
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-11 h-11 rounded-lg flex items-center justify-center bg-[var(--color-secondary)] flex-shrink-0">
+            <Package class="h-5 w-5 text-[var(--color-brand)]" />
           </div>
-          <div class="item-status">
-            <span class="status-badge" :class="stockClass(item)">{{ statusText(item) }}</span>
+          <div class="flex-1 min-w-0">
+            <div class="font-semibold text-[15px] truncate">{{ item.name }}</div>
+            <div class="text-xs text-[var(--color-muted-foreground)] font-[var(--font-mono)]">{{ item.code }} | 供应商: {{ item.supplierName || '-' }}</div>
           </div>
+          <AppBadge :variant="stockVariant(item)">{{ stockText(item) }}</AppBadge>
         </div>
 
-        <div class="stock-bar">
-          <div class="stock-track">
+        <div class="mb-3">
+          <div class="h-2 rounded-full bg-[var(--color-secondary)] overflow-hidden mb-1.5">
             <div
-              class="stock-fill"
-              :class="stockClass(item)"
+              class="h-full rounded-full transition-all duration-300"
+              :class="item.stock <= 0 ? 'bg-[var(--color-danger)]' : item.stock <= item.minStock ? 'bg-[var(--color-warning)]' : 'bg-[var(--color-success)]'"
               :style="{ width: Math.min(100, (item.stock / item.maxStock) * 100) + '%' }"
-            ></div>
+            />
           </div>
-          <div class="stock-labels">
-            <span class="stock-current amount">{{ item.stock }}</span>
-            <span class="stock-max">/ {{ item.maxStock }}</span>
-          </div>
-        </div>
-
-        <div class="item-details">
-          <div class="detail-col">
-            <span class="detail-label">规格</span>
-            <span class="detail-value">{{ item.spec }}</span>
-          </div>
-          <div class="detail-col">
-            <span class="detail-label">预警值</span>
-            <span class="detail-value">{{ item.minStock }}</span>
-          </div>
-          <div class="detail-col">
-            <span class="detail-label">进价</span>
-            <span class="detail-value amount">¥{{ item.cost }}</span>
-          </div>
-          <div class="detail-col">
-            <span class="detail-label">售价</span>
-            <span class="detail-value amount">¥{{ item.price }}</span>
+          <div class="flex items-baseline gap-1">
+            <span class="text-lg font-bold font-[var(--font-mono)]">{{ item.stock }}</span>
+            <span class="text-sm text-[var(--color-muted-foreground)]">/ {{ item.maxStock }}</span>
           </div>
         </div>
 
-        <div class="item-actions">
-          <button class="action-btn" @click="adjustStock(item)"><Icon name="BarChart3" class="w-5 h-5" /> 调整库存</button>
-          <button class="action-btn primary" @click="viewHistory(item)">📜 出入库记录</button>
+        <div class="grid grid-cols-4 gap-2 py-3 border-t border-b border-[var(--color-border)] mb-3 text-center text-sm">
+          <div class="flex flex-col items-center gap-0.5">
+            <span class="text-[11px] text-[var(--color-muted-foreground)]">规格</span>
+            <span class="font-medium text-xs">{{ item.spec }}</span>
+          </div>
+          <div class="flex flex-col items-center gap-0.5">
+            <span class="text-[11px] text-[var(--color-muted-foreground)]">预警值</span>
+            <span class="font-medium">{{ item.minStock }}</span>
+          </div>
+          <div class="flex flex-col items-center gap-0.5">
+            <span class="text-[11px] text-[var(--color-muted-foreground)]">进价</span>
+            <span class="font-medium font-[var(--font-mono)]">¥{{ item.cost }}</span>
+          </div>
+          <div class="flex flex-col items-center gap-0.5">
+            <span class="text-[11px] text-[var(--color-muted-foreground)]">售价</span>
+            <span class="font-medium font-[var(--font-mono)]">¥{{ item.price }}</span>
+          </div>
         </div>
-      </div>
+
+        <div class="flex gap-2">
+          <AppButton variant="secondary" size="sm" class="flex-1" @click="adjustStock(item)">调整库存</AppButton>
+          <AppButton size="sm" class="flex-1" @click="viewHistory(item)">出入库记录</AppButton>
+        </div>
+      </AppCard>
     </div>
 
-    <!-- Stock Warning Banner -->
-    <div v-if="warningItems.length > 0" class="warning-banner">
-      <span><Icon name="AlertTriangle" class="w-4 h-4" /> {{ warningItems.length }} 种商品库存不足，请及时补货</span>
-      <button class="warning-btn" @click="activeTab = 'warning'">查看</button>
+    <!-- Warning Banner -->
+    <div v-if="warningItems.length > 0" class="fixed bottom-20 left-4 right-4 md:static md:mt-2 flex justify-between items-center p-3 rounded-xl bg-[var(--color-warning-muted)] border border-[var(--color-warning)]/30 text-[var(--color-warning)] text-sm backdrop-blur-lg z-50">
+      <span class="flex items-center gap-2"><AlertTriangle class="h-4 w-4" /> {{ warningItems.length }} 种商品库存不足</span>
+      <AppButton size="sm" variant="secondary" class="bg-[var(--color-warning)] text-white border-none" @click="activeTab = 'warning'">查看</AppButton>
     </div>
 
     <!-- Adjust Modal -->
-    <div v-if="showAdjustModal" class="modal-overlay" @click.self="showAdjustModal = false">
-      <div class="modal-panel">
-        <div class="modal-header">
-          <h3>库存调整 - {{ adjustItem?.name }}</h3>
-          <button class="close-btn" @click="showAdjustModal = false"><Icon name="X" class="w-4 h-4" /></button>
-        </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label>调整类型</label>
-            <div class="type-selector">
-              <button class="type-btn" :class="{ active: adjustType === 'in' }" @click="adjustType = 'in'"><Icon name="ArrowDownLeft" class="w-4 h-4" /> 入库</button>
-              <button class="type-btn" :class="{ active: adjustType === 'out' }" @click="adjustType = 'out'">📤 出库</button>
-              <button class="type-btn" :class="{ active: adjustType === 'count' }" @click="adjustType = 'count'"><Icon name="FileText" class="w-4 h-4" /> 盘点</button>
-            </div>
-          </div>
-          <div class="form-group">
-            <label>当前库存</label>
-            <input :value="adjustItem?.stock" class="kimi-input" disabled />
-          </div>
-          <div class="form-group">
-            <label>调整数量</label>
-            <input v-model.number="adjustQty" type="number" class="kimi-input" placeholder="正数增加，负数减少" />
-          </div>
-          <div class="form-group">
-            <label>备注</label>
-            <input v-model="adjustRemark" class="kimi-input" placeholder="调整原因..." />
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn-secondary" @click="showAdjustModal = false">取消</button>
-          <button class="btn-primary" @click="confirmAdjust">确认调整</button>
-        </div>
+    <AppDialog :open="showAdjustModal" @close="showAdjustModal = false">
+      <div class="p-5 border-b border-[var(--color-border)] flex justify-between items-center">
+        <h3 class="text-lg font-semibold">库存调整 - {{ adjustItem?.name }}</h3>
+        <AppButton variant="ghost" size="icon-sm" @click="showAdjustModal = false"><X class="h-4 w-4" /></AppButton>
       </div>
-    </div>
+      <div class="p-5 flex flex-col gap-4">
+        <AppFormGroup label="调整类型">
+          <div class="flex gap-2">
+            <AppButton :variant="adjustType === 'in' ? 'default' : 'secondary'" class="flex-1" @click="adjustType = 'in'">入库</AppButton>
+            <AppButton :variant="adjustType === 'out' ? 'default' : 'secondary'" class="flex-1" @click="adjustType = 'out'">出库</AppButton>
+            <AppButton :variant="adjustType === 'count' ? 'default' : 'secondary'" class="flex-1" @click="adjustType = 'count'">盘点</AppButton>
+          </div>
+        </AppFormGroup>
+        <AppFormGroup label="当前库存"><AppInput :value="adjustItem?.stock" disabled /></AppFormGroup>
+        <AppFormGroup label="调整数量"><AppInput v-model.number="adjustQty" type="number" placeholder="正数增加，负数减少" /></AppFormGroup>
+        <AppFormGroup label="备注"><AppInput v-model="adjustRemark" placeholder="调整原因..." /></AppFormGroup>
+      </div>
+      <div class="p-4 border-t border-[var(--color-border)] flex gap-3">
+        <AppButton variant="secondary" class="flex-1" @click="showAdjustModal = false">取消</AppButton>
+        <AppButton class="flex-1" @click="confirmAdjust">确认调整</AppButton>
+      </div>
+    </AppDialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
-import Icon from '@/components/Icon.vue'
 import { productApi, partnerApi, inventoryApi } from '@/api'
 import { useToastStore } from '@/stores/toast'
+import { Package, AlertTriangle, X } from 'lucide-vue-next'
+import { AppButton, AppCard, AppInput, AppSelect, AppSearch, AppDialog, AppFormGroup, AppBadge, AppTabs, AppLoading } from '@/components/ui'
 
 const toast = useToastStore()
 const searchQuery = ref('')
@@ -149,55 +123,37 @@ const items = ref<Array<any>>([])
 const suppliers = ref<Array<{ id: number; name: string }>>([])
 
 const tabs = [
-  { value: 'all', label: '全部', count: 0 },
-  { value: 'warning', label: '库存预警', count: 0 },
-  { value: 'normal', label: '库存正常', count: 0 }
+  { value: 'all', label: '全部' },
+  { value: 'warning', label: '库存预警' },
+  { value: 'normal', label: '库存正常' }
 ]
 
 async function loadSuppliers() {
   try {
     const res = await partnerApi.list({ type: 'supplier' })
     suppliers.value = res.data.map((s: any) => ({ id: s.id, name: s.name }))
-  } catch (e: any) {
-    console.error('加载供应商失败', e.message)
-  }
+  } catch (e: any) { console.error('加载供应商失败', e.message) }
 }
 
 async function loadData() {
   loading.value = true
   try {
-    const res = await productApi.list({
-      supplier: selectedSupplier.value ? String(selectedSupplier.value) : undefined
-    })
+    const res = await productApi.list({ supplier: selectedSupplier.value ? String(selectedSupplier.value) : undefined })
     items.value = res.data.map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      code: p.barcode || '',
-      spec: p.specs || '',
-      stock: p.stockQty,
-      minStock: p.minStock,
-      maxStock: p.maxStock,
-      cost: p.purchasePrice,
-      price: p.salePrice,
-      supplierName: p.supplierName,
-      icon: 'Package'
+      id: p.id, name: p.name, code: p.barcode || '', spec: p.specs || '',
+      stock: p.stockQty, minStock: p.minStock, maxStock: p.maxStock || 100,
+      cost: p.purchasePrice, price: p.salePrice, supplierName: p.supplierName
     }))
-  } catch (e: any) {
-    toast.error(e.message || '加载失败')
-  } finally {
-    loading.value = false
-  }
+  } catch (e: any) { toast.error(e.message || '加载失败') }
+  finally { loading.value = false }
 }
 
 const warningItems = computed(() => items.value.filter(i => i.stock <= i.minStock))
 
 const filteredItems = computed(() => {
   let result = items.value
-  if (activeTab.value === 'warning') {
-    result = result.filter(i => i.stock <= i.minStock)
-  } else if (activeTab.value === 'normal') {
-    result = result.filter(i => i.stock > i.minStock)
-  }
+  if (activeTab.value === 'warning') result = result.filter(i => i.stock <= i.minStock)
+  else if (activeTab.value === 'normal') result = result.filter(i => i.stock > i.minStock)
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
     result = result.filter(i => i.name.toLowerCase().includes(q) || i.code.includes(q))
@@ -205,13 +161,13 @@ const filteredItems = computed(() => {
   return result
 })
 
-function stockClass(item: any) {
+function stockVariant(item: any) {
   if (item.stock <= 0) return 'danger'
   if (item.stock <= item.minStock) return 'warning'
-  return 'normal'
+  return 'success'
 }
 
-function statusText(item: any) {
+function stockText(item: any) {
   if (item.stock <= 0) return '缺货'
   if (item.stock <= item.minStock) return '预警'
   return '正常'
@@ -226,25 +182,18 @@ function adjustStock(item: any) {
 }
 
 async function confirmAdjust() {
-  if (!adjustItem.value) return
-  if (adjustQty.value === 0) {
-    toast.warning('调整数量不能为 0')
-    return
-  }
+  if (!adjustItem.value || adjustQty.value === 0) { toast.warning('调整数量不能为 0'); return }
   try {
     const qty = adjustType.value === 'out' ? -Math.abs(adjustQty.value) : Math.abs(adjustQty.value)
     await inventoryApi.adjust({
-      productId: adjustItem.value.id,
-      qty,
+      productId: adjustItem.value.id, qty,
       type: adjustType.value === 'in' ? '入库' : adjustType.value === 'out' ? '出库' : '盘点',
       remark: adjustRemark.value || undefined
     })
     showAdjustModal.value = false
     toast.success('库存调整成功！')
     await loadData()
-  } catch (err: any) {
-    toast.error(err.message || '库存调整失败')
-  }
+  } catch (err: any) { toast.error(err.message || '库存调整失败') }
 }
 
 function viewHistory(item: any) {
@@ -252,441 +201,5 @@ function viewHistory(item: any) {
 }
 
 watch(selectedSupplier, loadData)
-
-onMounted(() => {
-  loadSuppliers()
-  loadData()
-})
+onMounted(() => { loadSuppliers(); loadData() })
 </script>
-
-<style scoped>
-.inventory-view {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  padding-bottom: 20px;
-}
-
-.search-box {
-  position: relative;
-}
-
-.search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-tertiary);
-}
-
-.kimi-input {
-  width: 100%;
-  height: 44px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 0 12px 0 40px;
-  color: var(--text-primary);
-  font-size: 15px;
-}
-
-.kimi-input:focus {
-  border-color: #7C5CFC;
-  outline: none;
-}
-
-.supplier-filter-row {
-  margin-bottom: 8px;
-}
-
-.supplier-select {
-  width: 100%;
-  max-width: 280px;
-}
-
-.filter-tabs {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-}
-
-.filter-tab {
-  padding: 8px 16px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-full);
-  color: var(--text-secondary);
-  font-size: 14px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s;
-}
-
-.filter-tab.active {
-  background: var(--accent-subtle); border: 1px solid var(--accent-border); color: var(--accent-primary);
-  border-color: transparent;
-  color: white;
-}
-
-.tab-count {
-  font-size: 12px;
-  opacity: 0.8;
-}
-
-.inventory-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.inventory-card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  transition: all 0.2s;
-}
-
-.inventory-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-card);
-}
-
-.inventory-card.warning {
-  border-color: rgba(245, 158, 11, 0.3);
-}
-
-.inventory-card.danger {
-  border-color: rgba(239, 68, 68, 0.4);
-  box-shadow: 0 0 12px rgba(239, 68, 68, 0.1);
-}
-
-.item-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.item-icon {
-  width: 44px;
-  height: 44px;
-  background: var(--gradient-subtle);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  flex-shrink: 0;
-}
-
-.item-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.item-name {
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-
-.item-code {
-  font-size: 12px;
-  color: var(--text-tertiary);
-  font-family: monospace;
-}
-
-.status-badge {
-  font-size: 11px;
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  font-weight: 500;
-}
-
-.status-badge.normal {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--color-success);
-}
-
-.status-badge.warning {
-  background: rgba(245, 158, 11, 0.15);
-  color: var(--color-warning);
-  animation: pulse-yellow 2s infinite;
-}
-
-.status-badge.danger {
-  background: rgba(239, 68, 68, 0.15);
-  color: var(--color-danger);
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.2);
-}
-
-.stock-bar {
-  margin-bottom: 12px;
-}
-
-.stock-track {
-  height: 8px;
-  background: var(--bg-surface);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-  margin-bottom: 6px;
-}
-
-.stock-fill {
-  height: 100%;
-  border-radius: var(--radius-full);
-  transition: width 0.3s ease;
-}
-
-.stock-fill.normal {
-  background: var(--color-success);
-}
-
-.stock-fill.warning {
-  background: var(--color-warning);
-}
-
-.stock-fill.danger {
-  background: var(--color-danger);
-}
-
-.stock-labels {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-}
-
-.stock-current {
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.stock-max {
-  font-size: 13px;
-  color: var(--text-tertiary);
-}
-
-.item-details {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  padding: 12px 0;
-  border-top: 1px solid var(--border-subtle);
-  border-bottom: 1px solid var(--border-subtle);
-  margin-bottom: 12px;
-}
-
-.detail-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.detail-label {
-  font-size: 11px;
-  color: var(--text-tertiary);
-}
-
-.detail-value {
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.item-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.action-btn {
-  flex: 1;
-  height: 36px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.action-btn.primary {
-  background: var(--gradient-subtle);
-  border-color: #7C5CFC;
-  color: var(--text-primary);
-}
-
-.warning-banner {
-  position: fixed;
-  bottom: 76px;
-  left: 16px;
-  right: 16px;
-  background: rgba(245, 158, 11, 0.15);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-  border-radius: var(--radius-lg);
-  padding: 12px 16px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: var(--color-warning);
-  font-size: 14px;
-  backdrop-filter: blur(8px);
-  z-index: 50;
-}
-
-@media (min-width: 1024px) {
-  .warning-banner {
-    position: static;
-    margin-top: 8px;
-  }
-}
-
-.warning-btn {
-  background: var(--color-warning);
-  border: none;
-  border-radius: var(--radius-md);
-  color: white;
-  padding: 4px 12px;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  z-index: 300;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-
-@media (min-width: 768px) {
-  .modal-overlay {
-    align-items: center;
-  }
-}
-
-.modal-panel {
-  background: var(--bg-elevated);
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  width: 100%;
-  max-width: 480px;
-  max-height: 90vh;
-  overflow-y: auto;
-  animation: slide-up 0.3s ease-out;
-}
-
-@media (min-width: 768px) {
-  .modal-panel {
-    border-radius: var(--radius-xl);
-  }
-}
-
-@keyframes slide-up {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.modal-header h3 {
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 20px;
-  cursor: pointer;
-}
-
-.modal-body {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.form-group label {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.type-selector {
-  display: flex;
-  gap: 8px;
-}
-
-.type-btn {
-  flex: 1;
-  height: 40px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.type-btn.active {
-  background: var(--accent-subtle); border: 1px solid var(--accent-border); color: var(--accent-primary);
-  border-color: transparent;
-  color: white;
-}
-
-.modal-footer {
-  display: flex;
-  gap: 12px;
-  padding: 16px 20px;
-  border-top: 1px solid var(--border-subtle);
-}
-
-.btn-secondary {
-  flex: 1;
-  height: 48px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-medium);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  font-size: 15px;
-  cursor: pointer;
-}
-
-.btn-primary {
-  flex: 1;
-  height: 48px;
-  background: var(--accent-primary);
-  border: none;
-  border-radius: var(--radius-md);
-  color: white;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  
-}
-
-@keyframes pulse-yellow {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-</style>

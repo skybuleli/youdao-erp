@@ -1,129 +1,108 @@
 <template>
-  <div class="pos-view">
+  <div class="flex flex-col gap-3 pb-4">
     <!-- Scan Area -->
-    <div class="scan-area" @click="handleScan">
-      <div class="scan-content" :class="{ scanning: isScanning }">
-        <span class="scan-icon">ScanLine</span>
-        <span class="scan-text">{{ isScanning ? '正在扫描...' : '点击扫码或输入条码' }}</span>
-      </div>
-    </div>
+    <AppCard clickable class="p-6 border-dashed border-2 border-[var(--color-border)] flex flex-col items-center gap-2 cursor-pointer hover:border-[var(--color-brand)] transition-colors" @click="handleScan">
+      <ScanLine class="h-9 w-9 text-[var(--color-brand)]" />
+      <span class="text-[15px] text-[var(--color-muted-foreground)]">{{ isScanning ? '正在扫描...' : '点击扫码或输入条码' }}</span>
+    </AppCard>
 
     <!-- Cart -->
-    <div class="cart-section">
-      <div class="cart-header">
-        <span>购物车 ({{ cart.length }})</span>
-        <button class="clear-btn" @click="clearCart">清空</button>
+    <AppCard class="p-4">
+      <div class="flex justify-between items-center mb-3">
+        <span class="font-semibold">购物车 ({{ cart.length }})</span>
+        <AppButton variant="ghost" size="sm" class="text-[var(--color-danger)]" @click="clearCart">清空</AppButton>
       </div>
-
-      <div v-if="cart.length === 0" class="empty-cart">
-        <span class="empty-icon">ShoppingCart</span>
-        <span class="empty-text">扫码添加商品</span>
-      </div>
-
-      <div v-else class="cart-items">
-        <div v-for="(item, index) in cart" :key="index" class="cart-item animate-slide-in">
-          <div class="item-icon"><Icon :name="item.icon || 'Package'" class="w-5 h-5" /></div>
-          <div class="item-info">
-            <div class="item-name">{{ item.name }}</div>
-            <div class="item-price">¥{{ item.price }}/{{ item.unit }}</div>
+      <AppEmpty v-if="cart.length === 0" message="扫码添加商品" />
+      <div v-else class="flex flex-col gap-2">
+        <div v-for="(item, index) in cart" :key="index" class="flex items-center gap-3 p-3 rounded-lg bg-[var(--color-secondary)] animate-slide-in">
+          <div class="w-10 h-10 rounded-lg flex items-center justify-center bg-[var(--color-brand-muted)] flex-shrink-0">
+            <Package class="h-5 w-5 text-[var(--color-brand)]" />
           </div>
-          <div class="item-actions">
-            <button class="qty-btn" @click="decreaseQty(index)">−</button>
-            <span class="qty-value amount">{{ item.qty }}</span>
-            <button class="qty-btn" @click="increaseQty(index)">+</button>
-            <span class="item-subtotal amount">¥{{ (item.price * item.qty).toFixed(2) }}</span>
-            <button class="delete-btn" @click="removeItem(index)">Trash2</button>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium truncate">{{ item.name }}</div>
+            <div class="text-xs text-[var(--color-muted-foreground)]">¥{{ item.price }}/{{ item.unit }}</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <AppButton variant="secondary" size="icon-sm" @click="decreaseQty(index)"><Minus class="h-3 w-3" /></AppButton>
+            <span class="min-w-[32px] text-center font-semibold">{{ item.qty }}</span>
+            <AppButton variant="secondary" size="icon-sm" @click="increaseQty(index)"><Plus class="h-3 w-3" /></AppButton>
+            <span class="font-semibold min-w-[70px] text-right font-[var(--font-mono)]">¥{{ (item.price * item.qty).toFixed(2) }}</span>
+            <AppButton variant="ghost" size="icon-sm" class="text-[var(--color-danger)]" @click="removeItem(index)">
+              <Trash2 class="h-4 w-4" />
+            </AppButton>
           </div>
         </div>
       </div>
-    </div>
+    </AppCard>
 
-    <!-- Summary Panel (Fixed Bottom) -->
-    <div class="summary-panel">
-      <div class="summary-row">
-        <div class="summary-item">
-          <span class="summary-label">商品种类</span>
-          <span class="summary-value amount">{{ cart.length }}</span>
-        </div>
-        <div class="summary-item">
-          <span class="summary-label">总数量</span>
-          <span class="summary-value amount">{{ totalQty }}</span>
-        </div>
-        <div class="summary-item">
-          <span class="summary-label">合计</span>
-          <span class="summary-value amount gradient-text">¥{{ totalAmount.toFixed(2) }}</span>
+    <!-- Summary Panel -->
+    <AppCard class="p-4 flex flex-col gap-3">
+      <div class="flex justify-between gap-4">
+        <div v-for="s in summaryItems" :key="s.label" class="flex flex-col items-center gap-1 flex-1">
+          <span class="text-xs text-[var(--color-muted-foreground)]">{{ s.label }}</span>
+          <span class="text-xl font-bold font-[var(--font-mono)]" :class="s.class">{{ s.value }}</span>
         </div>
       </div>
-
-      <div class="summary-details">
-        <div class="detail-row">
+      <div class="flex flex-col gap-2 p-3 rounded-lg bg-[var(--color-secondary)]">
+        <div class="flex justify-between items-center text-sm">
           <span>优惠</span>
-          <input v-model.number="discount" type="number" class="discount-input" placeholder="0.00" />
+          <AppInput v-model.number="discount" type="number" class="w-24 text-right" placeholder="0.00" />
         </div>
-        <div class="detail-row">
+        <div class="flex justify-between items-center text-sm">
           <span>应收</span>
-          <span class="amount" style="font-size: 18px; font-weight: 700;">¥{{ payableAmount.toFixed(2) }}</span>
+          <span class="text-lg font-bold font-[var(--font-mono)]">¥{{ payableAmount.toFixed(2) }}</span>
         </div>
       </div>
-
-      <div class="customer-row">
-        <select v-model="selectedCustomer" class="kimi-select">
+      <div class="flex gap-2">
+        <AppSelect v-model="selectedCustomer" class="flex-1">
           <option :value="null">选择客户</option>
           <option v-for="p in customers" :key="p.id" :value="p.id">{{ p.name }}</option>
-        </select>
-        <select class="kimi-select">
-          <option>总仓</option>
-        </select>
+        </AppSelect>
+        <AppSelect class="flex-1"><option>总仓</option></AppSelect>
       </div>
-
-      <div class="payment-row">
-        <button
+      <div class="flex gap-2">
+        <AppButton
           v-for="method in paymentMethods"
           :key="method.value"
-          class="payment-btn"
-          :class="{ active: selectedPayment === method.value }"
+          :variant="selectedPayment === method.value ? 'default' : 'secondary'"
+          class="flex-1 flex-col h-12 gap-0.5 text-xs"
           @click="selectedPayment = method.value"
         >
-          <Icon :name="method.icon" class="w-4 h-4" />
+          <component :is="method.icon" class="h-4 w-4" />
           <span>{{ method.label }}</span>
-        </button>
+        </AppButton>
       </div>
-
-      <div class="received-row">
+      <div class="flex justify-between items-center px-1">
         <span>实收</span>
-        <input v-model.number="received" type="number" class="received-input" :placeholder="payableAmount.toFixed(2)" />
+        <AppInput v-model.number="received" type="number" class="w-32 text-right text-base font-semibold" :placeholder="payableAmount.toFixed(2)" />
       </div>
-
-      <div class="change-row" v-if="received > payableAmount">
+      <div v-if="received > payableAmount" class="flex justify-between items-center px-1 text-sm">
         <span>找零</span>
-        <span class="amount" style="color: var(--color-success);">¥{{ (received - payableAmount).toFixed(2) }}</span>
+        <span class="text-[var(--color-success)] font-[var(--font-mono)]">¥{{ (received - payableAmount).toFixed(2) }}</span>
       </div>
-
-      <div class="action-row">
-        <button class="btn-draft">保存草稿</button>
-        <button class="btn-submit" @click="submitOrder">
-          <span>💜 确认收款 ¥{{ payableAmount.toFixed(2) }}</span>
-        </button>
+      <div class="flex gap-3">
+        <AppButton variant="secondary" class="flex-1 h-13">保存草稿</AppButton>
+        <AppButton class="flex-[2] h-13 text-base" @click="submitOrder">确认收款 ¥{{ payableAmount.toFixed(2) }}</AppButton>
       </div>
-    </div>
+    </AppCard>
 
     <!-- Quick Products -->
-    <div class="quick-products">
-      <h4>快捷商品</h4>
-      <div class="product-grid">
-        <button
+    <AppCard class="p-4">
+      <h4 class="text-sm text-[var(--color-muted-foreground)] mb-3">快捷商品</h4>
+      <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+        <AppButton
           v-for="product in quickProducts"
           :key="product.id"
-          class="quick-product-btn"
+          variant="secondary"
+          class="flex-col h-auto py-3 px-1 gap-1 text-xs"
           @click="addToCart(product)"
         >
-          <Icon :name="product.icon" class="qp-icon w-5 h-5" />
-          <span class="qp-name">{{ product.name }}</span>
-          <span class="qp-supplier">{{ product.supplierName || '-' }}</span>
-          <span class="qp-price">¥{{ product.price }}</span>
-        </button>
+          <Package class="h-5 w-5" />
+          <span class="truncate max-w-full">{{ product.name }}</span>
+          <span class="text-[var(--color-brand)] font-semibold">¥{{ product.price }}</span>
+        </AppButton>
       </div>
-    </div>
+    </AppCard>
   </div>
 </template>
 
@@ -131,6 +110,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { productApi, orderApi, partnerApi } from '@/api'
 import { useToastStore } from '@/stores/toast'
+import { ScanLine, Package, Minus, Plus, Trash2, Banknote, CircleDot } from 'lucide-vue-next'
+import { AppButton, AppCard, AppInput, AppSelect, AppEmpty } from '@/components/ui'
 
 const toast = useToastStore()
 const isScanning = ref(false)
@@ -138,36 +119,28 @@ const cart = ref<Array<{ id: number; name: string; price: number; qty: number; u
 const discount = ref(0)
 const selectedPayment = ref('cash')
 const received = ref(0)
-const loading = ref(false)
 const quickProducts = ref<Array<any>>([])
 const customers = ref<Array<{ id: number; name: string }>>([])
 const selectedCustomer = ref<number | null>(null)
 
 const paymentMethods = [
-  { value: 'cash', label: '现金', icon: 'Banknote' },
-  { value: 'wechat', label: '微信', icon: 'CircleDot' },
-  { value: 'alipay', label: '支付宝', icon: 'CircleDot' }
+  { value: 'cash', label: '现金', icon: Banknote },
+  { value: 'wechat', label: '微信', icon: CircleDot },
+  { value: 'alipay', label: '支付宝', icon: CircleDot }
 ]
 
 async function loadData() {
-  loading.value = true
   try {
     const [prodRes, partnerRes] = await Promise.all([
-      productApi.list().catch(() => ({ data: [], total: 0, page: 1, pageSize: 10 })),
+      productApi.list().catch(() => ({ data: [] })),
       partnerApi.list().catch(() => ({ data: [] }))
     ])
     quickProducts.value = (prodRes.data || []).slice(0, 12).map((p: any) => ({
-      id: p.id,
-      name: p.name,
-      price: p.salePrice,
-      supplierName: p.supplierName,
-      icon: 'Package'
+      id: p.id, name: p.name, price: p.salePrice, supplierName: p.supplierName, icon: 'Package'
     }))
     customers.value = (partnerRes.data || []).map((p: any) => ({ id: p.id, name: p.name }))
   } catch (e: any) {
     toast.error(e.message || '加载失败')
-  } finally {
-    loading.value = false
   }
 }
 
@@ -175,65 +148,36 @@ const totalQty = computed(() => cart.value.reduce((sum, item) => sum + item.qty,
 const totalAmount = computed(() => cart.value.reduce((sum, item) => sum + item.price * item.qty, 0))
 const payableAmount = computed(() => Math.max(0, totalAmount.value - discount.value))
 
-function handleScan() {
-  toast.info('扫码功能待接入条码扫描设备')
-}
+const summaryItems = computed(() => [
+  { label: '商品种类', value: cart.value.length, class: '' },
+  { label: '总数量', value: totalQty.value, class: '' },
+  { label: '合计', value: `¥${totalAmount.value.toFixed(2)}`, class: 'gradient-text' },
+])
 
-function addToCart(product: { id: number; name: string; price: number; qty?: number; unit?: string; icon?: string }) {
+function handleScan() { toast.info('扫码功能待接入条码扫描设备') }
+
+function addToCart(product: any) {
   const existing = cart.value.find(item => item.id === product.id)
-  if (existing) {
-    existing.qty++
-  } else {
-    cart.value.push({
-      ...product,
-      qty: product.qty || 1,
-      unit: product.unit || '件',
-      icon: product.icon || 'Package'
-    })
-  }
+  if (existing) existing.qty++
+  else cart.value.push({ ...product, qty: 1, unit: '件', icon: 'Package' })
 }
 
-function increaseQty(index: number) {
-  cart.value[index].qty++
-}
-
+function increaseQty(index: number) { cart.value[index].qty++ }
 function decreaseQty(index: number) {
-  if (cart.value[index].qty > 1) {
-    cart.value[index].qty--
-  } else {
-    removeItem(index)
-  }
+  if (cart.value[index].qty > 1) cart.value[index].qty--
+  else removeItem(index)
 }
-
-function removeItem(index: number) {
-  cart.value.splice(index, 1)
-}
-
-function clearCart() {
-  cart.value = []
-}
+function removeItem(index: number) { cart.value.splice(index, 1) }
+function clearCart() { cart.value = [] }
 
 async function submitOrder() {
-  if (!selectedCustomer.value) {
-    toast.warning('请选择客户')
-    return
-  }
-  if (cart.value.length === 0) {
-    toast.warning('请先添加商品')
-    return
-  }
+  if (!selectedCustomer.value) { toast.warning('请选择客户'); return }
+  if (cart.value.length === 0) { toast.warning('请先添加商品'); return }
   try {
     await orderApi.create({
-      type: 'sale',
-      partnerId: selectedCustomer.value,
-      paymentMethod: selectedPayment.value,
-      discountAmount: discount.value,
-      paidAmount: received.value || payableAmount.value,
-      items: cart.value.map(item => ({
-        productId: item.id,
-        qty: item.qty,
-        unitPrice: item.price
-      }))
+      type: 'sale', partnerId: selectedCustomer.value, paymentMethod: selectedPayment.value,
+      discountAmount: discount.value, paidAmount: received.value || payableAmount.value,
+      items: cart.value.map(item => ({ productId: item.id, qty: item.qty, unitPrice: item.price }))
     })
     toast.success('订单提交成功！')
     clearCart()
@@ -245,420 +189,3 @@ async function submitOrder() {
 
 onMounted(loadData)
 </script>
-
-<style scoped>
-.pos-view {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding-bottom: 20px;
-}
-
-/* Scan Area */
-.scan-area {
-  background: var(--bg-elevated);
-  border: 2px dashed var(--border-medium);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.scan-area:hover {
-  border-color: #7C5CFC;
-  
-}
-
-.scan-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s;
-}
-
-.scan-content.scanning {
-  animation: pulse-purple 1.5s infinite;
-}
-
-@keyframes pulse-purple {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-.scan-icon {
-  font-size: 36px;
-}
-
-.scan-text {
-  font-size: 15px;
-  color: var(--text-secondary);
-}
-
-/* Cart Section */
-.cart-section {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-}
-
-.cart-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-  font-weight: 600;
-}
-
-.clear-btn {
-  background: none;
-  border: none;
-  color: var(--color-danger);
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.empty-cart {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 32px;
-  color: var(--text-tertiary);
-}
-
-.empty-icon {
-  font-size: 48px;
-  opacity: 0.5;
-}
-
-.cart-items {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.cart-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: var(--bg-surface);
-  border-radius: var(--radius-md);
-}
-
-.item-icon {
-  width: 40px;
-  height: 40px;
-  background: var(--gradient-subtle);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  flex-shrink: 0;
-}
-
-.item-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.item-name {
-  font-size: 14px;
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.item-price {
-  font-size: 12px;
-  color: var(--text-tertiary);
-}
-
-.item-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.qty-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 1px solid var(--border-medium);
-  background: var(--bg-elevated);
-  color: var(--text-primary);
-  font-size: 18px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-@media (max-width: 640px) {
-  .qty-btn {
-    width: 44px;
-    height: 44px;
-  }
-}
-
-.qty-value {
-  min-width: 32px;
-  text-align: center;
-  font-weight: 600;
-}
-
-.item-subtotal {
-  font-weight: 600;
-  min-width: 70px;
-  text-align: right;
-}
-
-.delete-btn {
-  background: none;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-  opacity: 0.6;
-}
-
-.delete-btn:hover {
-  opacity: 1;
-}
-
-/* Summary Panel */
-.summary-panel {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.summary-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.summary-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  flex: 1;
-}
-
-.summary-label {
-  font-size: 12px;
-  color: var(--text-tertiary);
-}
-
-.summary-value {
-  font-size: 20px;
-  font-weight: 700;
-  font-family: var(--font-display);
-}
-
-.summary-details {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  background: var(--bg-surface);
-  border-radius: var(--radius-md);
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
-}
-
-.discount-input {
-  width: 100px;
-  height: 36px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  text-align: right;
-  padding: 0 12px;
-}
-
-.customer-row {
-  display: flex;
-  gap: 8px;
-}
-
-.kimi-select {
-  flex: 1;
-  height: 44px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  padding: 0 12px;
-  font-size: 14px;
-}
-
-.payment-row {
-  display: flex;
-  gap: 8px;
-}
-
-.payment-btn {
-  flex: 1;
-  height: 48px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.payment-btn.active {
-  background: var(--gradient-subtle);
-  border-color: #7C5CFC;
-  color: var(--text-primary);
-}
-
-.received-row,
-.change-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 4px;
-}
-
-.received-input {
-  width: 120px;
-  height: 40px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  text-align: right;
-  padding: 0 12px;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.action-row {
-  display: flex;
-  gap: 12px;
-}
-
-.btn-draft {
-  flex: 1;
-  height: 52px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-medium);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  font-size: 15px;
-  cursor: pointer;
-}
-
-.btn-submit {
-  flex: 2;
-  height: 52px;
-  background: var(--accent-primary);
-  border: none;
-  border-radius: var(--radius-md);
-  color: white;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  
-}
-
-.btn-submit:hover {
-  transform: translateY(-1px);
-  
-}
-
-.btn-submit:active {
-  transform: scale(0.97);
-}
-
-/* Quick Products */
-.quick-products {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-}
-
-.quick-products h4 {
-  margin-bottom: 12px;
-  font-size: 14px;
-  color: var(--text-secondary);
-}
-
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.quick-product-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 12px 4px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.quick-product-btn:hover {
-  background: var(--bg-hover);
-  border-color: #7C5CFC;
-}
-
-.qp-icon {
-  font-size: 24px;
-}
-
-.qp-name {
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
-}
-
-.qp-supplier {
-  font-size: 10px;
-  color: var(--text-tertiary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
-}
-
-.qp-price {
-  font-size: 13px;
-  font-weight: 600;
-  color: #7C5CFC;
-}
-</style>

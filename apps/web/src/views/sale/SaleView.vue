@@ -1,89 +1,84 @@
 <template>
-  <div class="sale-view">
+  <div class="flex flex-col gap-4">
     <!-- Stats -->
-    <div class="stats-row">
-      <div class="stat-item">
-        <span class="stat-label">本月销售</span>
-        <span class="stat-value amount gradient-text">¥{{ formatNumber(monthTotal) }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">销售单数</span>
-        <span class="stat-value amount">{{ orders.length }}</span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label">毛利润</span>
-        <span class="stat-value amount" style="color: var(--color-success);">¥{{ formatNumber(profit) }}</span>
-      </div>
+    <div class="grid grid-cols-3 gap-3">
+      <AppCard class="p-4 flex flex-col gap-1">
+        <span class="text-xs text-[var(--color-muted-foreground)]">本月销售</span>
+        <span class="text-lg font-bold gradient-text font-[var(--font-mono)]">¥{{ formatNumber(monthTotal) }}</span>
+      </AppCard>
+      <AppCard class="p-4 flex flex-col gap-1">
+        <span class="text-xs text-[var(--color-muted-foreground)]">销售单数</span>
+        <span class="text-lg font-bold font-[var(--font-mono)]">{{ orders.length }}</span>
+      </AppCard>
+      <AppCard class="p-4 flex flex-col gap-1">
+        <span class="text-xs text-[var(--color-muted-foreground)]">毛利润</span>
+        <span class="text-lg font-bold text-[var(--color-success)] font-[var(--font-mono)]">¥{{ formatNumber(profit) }}</span>
+      </AppCard>
     </div>
 
     <!-- Toolbar -->
-    <div class="toolbar">
-      <div class="search-box">
-        <span class="search-icon">🔍</span>
-        <input v-model="searchQuery" class="kimi-input" placeholder="搜索单号、客户..." />
-      </div>
-      <router-link to="/sale/return" class="btn-warning">
-        <span>🔄 退货</span>
-      </router-link>
-      <router-link to="/sale/pos" class="btn-primary">
-        <span>ShoppingCart 开单</span>
-      </router-link>
+    <div class="flex gap-3 items-center">
+      <AppSearch v-model="searchQuery" placeholder="搜索单号、客户..." class="flex-1" />
+      <AppButton variant="secondary" as-child>
+        <router-link to="/sale/return">退货</router-link>
+      </AppButton>
+      <AppButton as-child>
+        <router-link to="/sale/pos">开单</router-link>
+      </AppButton>
     </div>
 
-    <!-- Loading -->
-    <div v-if="loading" class="loading-state">加载中...</div>
+    <AppLoading v-if="loading" />
 
-    <!-- Order List -->
-    <div v-else class="order-list">
-      <div v-for="order in filteredOrders" :key="order.id" class="order-card">
-        <div class="order-header">
-          <div class="order-info">
-            <span class="order-no">{{ order.no }}</span>
-            <span class="order-type" :class="order.type">{{ order.typeName }}</span>
+    <div v-else class="flex flex-col gap-3">
+      <AppCard v-for="order in filteredOrders" :key="order.id" hoverable class="p-4">
+        <div class="flex justify-between items-center mb-3">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-semibold font-[var(--font-mono)]">{{ order.no }}</span>
+            <AppBadge :variant="order.type === 'sale' ? 'default' : 'warning'">{{ order.typeName }}</AppBadge>
           </div>
-          <span class="order-amount amount gradient-text">¥{{ order.totalAmount.toFixed(2) }}</span>
+          <span class="text-lg font-bold gradient-text font-[var(--font-mono)]">¥{{ order.totalAmount.toFixed(2) }}</span>
         </div>
-        <div class="order-body">
-          <div class="order-customer">
-            <span class="label">客户</span>
-            <span class="value">{{ order.customer }}</span>
+        <div class="flex flex-col gap-2 py-3 border-t border-b border-[var(--color-border)] mb-3 text-sm">
+          <div class="flex gap-2">
+            <span class="text-[var(--color-muted-foreground)] text-xs">客户</span>
+            <span>{{ order.customer }}</span>
           </div>
-          <div class="order-items-preview">
-            <span class="label">商品</span>
-            <span class="value">{{ order.items.map(i => i.name).join('、') }}</span>
+          <div class="flex gap-2">
+            <span class="text-[var(--color-muted-foreground)] text-xs">商品</span>
+            <span class="truncate">{{ order.items.map((i: any) => i.name).join('、') }}</span>
           </div>
-          <div class="order-meta">
-            <div>
-              <span class="label">数量</span>
-              <span class="value amount">{{ order.totalQty }}</span>
+          <div class="flex justify-between mt-1">
+            <div class="flex gap-2">
+              <span class="text-[var(--color-muted-foreground)] text-xs">数量</span>
+              <span class="font-medium font-[var(--font-mono)]">{{ order.totalQty }}</span>
             </div>
-            <div>
-              <span class="label">支付方式</span>
-              <span class="value">{{ order.payment }}</span>
+            <div class="flex gap-2">
+              <span class="text-[var(--color-muted-foreground)] text-xs">支付方式</span>
+              <span>{{ order.payment }}</span>
             </div>
           </div>
         </div>
-        <div class="order-footer">
-          <span class="order-date">{{ order.date }}</span>
-          <div class="order-actions">
-            <button class="action-btn" @click="printReceipt(order)"><Icon name="Printer" class="w-4 h-4" /> 打印</button>
-            <button class="action-btn" @click="viewDetail(order)">详情</button>
+        <div class="flex justify-between items-center">
+          <span class="text-xs text-[var(--color-muted-foreground)]">{{ order.date }}</span>
+          <div class="flex gap-2">
+            <AppButton variant="secondary" size="sm" @click="printReceipt(order)">打印</AppButton>
+            <AppButton variant="ghost" size="sm" @click="viewDetail(order)">详情</AppButton>
           </div>
         </div>
-      </div>
+      </AppCard>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import Icon from '@/components/Icon.vue'
 import { orderApi } from '@/api'
 import { useToastStore } from '@/stores/toast'
+import { AppButton, AppCard, AppSearch, AppBadge, AppLoading } from '@/components/ui'
 
 const toast = useToastStore()
 const searchQuery = ref('')
-const orders = ref<Array<{ id: number; no: string; type: string; typeName: string; customer: string; items: Array<{ name: string }>; totalQty: number; totalAmount: number; payment: string; date: string }>>([])
+const orders = ref<any[]>([])
 const loading = ref(false)
 
 async function loadData() {
@@ -91,8 +86,7 @@ async function loadData() {
   try {
     const res = await orderApi.list({ type: 'sale' })
     orders.value = res.data.map((o: any) => ({
-      id: o.id,
-      no: o.orderNo,
+      id: o.id, no: o.orderNo,
       type: o.subType || 'sale',
       typeName: o.subType ? '销售退货' : '销售出库',
       customer: `往来单位#${o.partnerId}`,
@@ -115,10 +109,7 @@ const profit = computed(() => Math.round(monthTotal.value * 0.2))
 const filteredOrders = computed(() => {
   if (!searchQuery.value) return orders.value
   const q = searchQuery.value.toLowerCase()
-  return orders.value.filter(o =>
-    o.no.toLowerCase().includes(q) ||
-    o.customer.toLowerCase().includes(q)
-  )
+  return orders.value.filter(o => o.no.toLowerCase().includes(q) || o.customer.toLowerCase().includes(q))
 })
 
 function formatNumber(n: number) {
@@ -135,223 +126,3 @@ function viewDetail(order: any) {
 
 onMounted(loadData)
 </script>
-
-<style scoped>
-.sale-view {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
-.stat-item {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.stat-label {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.stat-value {
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.toolbar {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.search-box {
-  flex: 1;
-  position: relative;
-}
-
-.search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-tertiary);
-}
-
-.kimi-input {
-  width: 100%;
-  height: 44px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 0 12px 0 40px;
-  color: var(--text-primary);
-  font-size: 15px;
-}
-
-.kimi-input:focus {
-  border-color: #7C5CFC;
-  outline: none;
-}
-
-.btn-primary,
-.btn-warning {
-  height: 44px;
-  padding: 0 16px;
-  border: none;
-  border-radius: var(--radius-md);
-  color: white;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-  text-decoration: none;
-}
-
-.btn-primary {
-  background: var(--accent-primary);
-}
-
-.btn-warning {
-  background: var(--color-warning);
-}
-
-.order-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.order-card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  transition: all 0.2s;
-}
-
-.order-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-card);
-}
-
-.order-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.order-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.order-no {
-  font-size: 14px;
-  font-weight: 600;
-  font-family: monospace;
-}
-
-.order-type {
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-}
-
-.order-type.sale {
-  background: rgba(124, 92, 252, 0.15);
-  color: #7C5CFC;
-}
-
-.order-type.return {
-  background: rgba(245, 158, 11, 0.15);
-  color: var(--color-warning);
-}
-
-.order-amount {
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.order-body {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px 0;
-  border-top: 1px solid var(--border-subtle);
-  border-bottom: 1px solid var(--border-subtle);
-  margin-bottom: 12px;
-}
-
-.order-customer,
-.order-items-preview {
-  display: flex;
-  gap: 8px;
-  font-size: 14px;
-}
-
-.order-meta {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 4px;
-}
-
-.label {
-  color: var(--text-tertiary);
-  font-size: 13px;
-}
-
-.value {
-  font-weight: 500;
-}
-
-.order-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.order-date {
-  font-size: 13px;
-  color: var(--text-tertiary);
-}
-
-.order-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.action-btn {
-  height: 36px;
-  padding: 0 14px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  font-size: 13px;
-  cursor: pointer;
-}
-
-@media (max-width: 640px) {
-  .action-btn {
-    min-height: 44px;
-    padding: 0 18px;
-    font-size: 14px;
-  }
-}
-</style>
