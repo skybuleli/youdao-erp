@@ -7,7 +7,10 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "build": "tsc",
-    "check": "tsc --noEmit && oxlint src/ --deny-warnings"
+    "check": "tsc --noEmit && oxlint src/ --deny-warnings",
+    "db:setup": "bash ./scripts/setup-db.sh",
+    "db:migrate": "wrangler d1 migrations apply youdao-erp-db --local",
+    "db:seed": "wrangler d1 execute youdao-erp-db --local --command=\"INSERT INTO users (username, password_hash, name, role) VALUES ('admin', '\\\\$2a\\\\$10\\\\$iVJ343sWn8fCRRbZjMiRve28wqrb2X8zR1jsAvH2DY4C.U9B/t.Ni', '管理员', 'admin')\""
   },
   "dependencies": {
     "hono": "^4.6.0",
